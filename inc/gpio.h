@@ -34,7 +34,7 @@ public:
   void PuPdPin (uint8_t pin, uint8_t s, uint8_t p);
   void setPin (uint8_t pin );
   void clearPin (uint8_t pin);
-  void changePinState (uint8_t pin);
+  void toglePin (uint8_t pin);
   void setPinState (uint8_t pin , bool state);
   bool pinState (uint8_t pin);
 

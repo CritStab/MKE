@@ -6,7 +6,7 @@ ptr Pit::set_func [4] = {&Pit::khz_set, &Pit::hz_set, &Pit::ms_set, &Pit::us_set
 
 Pit::Pit (channel ch, uint16_t n, mode m)
 {
-	SIM->SCGC6 |= SIM_SCGC6_PIT_MASK;
+	SIM->SCGC |= SIM_SCGC_PIT_MASK;
 	PIT->MCR = 0;
 	n_ch = ch;
 	(this->*(Pit::set_func[m]))(n);

@@ -1,38 +1,55 @@
 #include "shift_registr.h"
 
+Shift::ptrMode Shift::modeFunc [2] = {&Shift::setModeHw, &Shift::setModeSw};
+Shift::ptrSend Shift::sendFunc [2] = {&Shift::sendHw, &Shift::sendSw};
 
 Shift::Shift(Spi &s)
 {
 	mod = &s;
-	mod->set_ctar(ShiftDef::CtarNumber);
-	setMode();
+	mode_ = mod->getMode();
+	(this->*(Shift::modeFunc[mode_]))();
+	mod->start();
 }
 
-void Shift::setMode ()
+void Shift::setModeHw ()
 {
-	//===settings GPIO===//
-	//CS
-	mod->set_CS(ShiftDef::CsPort, ShiftDef::CsPin, Gpio::Alt2, ShiftDef::CsNumber);
-
-	//SCK
-	mod->set_SCK(ShiftDef::SckPort, ShiftDef::SckPin, Gpio::Alt2);
-
-	//MOSI
-	mod->set_MOSI(ShiftDef::MosiPort, ShiftDef::MosiPin, Gpio::Alt2);
-
 	//settings SPI
-	mod->set_cpha(Spi::first);
-	mod->set_cpol(Spi::neg);
-	mod->set_baudrate(Spi::div8);
-	mod->set_f_size(Spi::bit_8);
+	mod->setCpha(Spi::first);
+	mod->setCpol(Spi::neg);
+	mod->setBaudrate(Spi::div8);
+}
+
+void Shift::setModeSw ()
+{
+	CS.settingPinPort(ShiftDef::CsPort);
+	CS.settingPin(ShiftDef::CsPin);
+	CS.setPin(ShiftDef::CsPin);
+	//settings SPI
+	mod->setCpha(Spi::first);
+	mod->setCpol(Spi::neg);
+	mod->setBaudrate(Spi::div8);
 }
 
 void Shift::send (uint8_t data)
 {
-	mod->put_data(data, ShiftDef::CsNumber, ShiftDef::CtarNumber);
-	while (!mod->flag_tcf());
-	mod->clear_flag_tcf();
+	(this->*(Shift::sendFunc[mode_]))(data);
 }
+
+void Shift::sendHw (uint8_t data)
+{
+	while (!mod->flagSptef());
+	mod->put_data(data);
+}
+
+void Shift::sendSw (uint8_t data)
+{
+	CS.clearPin(ShiftDef::CsPin);
+	while (!mod->flagSptef());
+	mod->put_data(data);
+	CS.setPin(ShiftDef::CsPin);
+}
+
+
 
 
 

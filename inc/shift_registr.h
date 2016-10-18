@@ -1,4 +1,4 @@
-#include "MK02F12810.h"                 // Device header
+#include "MKE04Z1284.h"                 // Device header
 #include "spi.h"
 #include "gpio.h"
 
@@ -8,17 +8,6 @@ namespace ShiftDef
 //CS
 const Gpio::Port CsPort = Gpio::C;
 const uint8_t CsPin = 0;
-const Spi::CS_number CsNumber = Spi::CS4;
-
-//SCK
-const Gpio::Port SckPort = Gpio::E;
-const uint8_t SckPin = 17;
-
-//MOSI
-const Gpio::Port MosiPort = Gpio::E;
-const uint8_t MosiPin = 18;
-
-const Spi::CTAR_number CtarNumber = Spi::CTAR1;
 }
 
 #ifndef SHIFT_REGISTR_H
@@ -27,13 +16,23 @@ const Spi::CTAR_number CtarNumber = Spi::CTAR1;
 class Shift
 {
 private:
-	Gpio CS, SCK, MOSI;
+	using ptrMode = void (Shift::*)();
+	using ptrSend = void (Shift::*)(uint8_t);
+	Spi::Mode mode_;
+	Gpio CS;
 	Spi * mod;
+	static ptrMode modeFunc [2];
+	static ptrSend sendFunc [2];
 
 //functions
 public:
 	Shift (Spi &);
-	void setMode ();
 	void send (uint8_t data);
+
+private:
+	void setModeHw ();
+	void setModeSw ();
+	void sendHw (uint8_t data);
+	void sendSw (uint8_t data);
 };
 #endif

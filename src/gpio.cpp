@@ -47,7 +47,7 @@ void Gpio::clearPin (unsigned char pin)
 	GpioBase [arrPort [prt]]->PCOR |= 1 << (pin+arrPinShift[prt]);
 }
 
-void Gpio::changePinState (uint8_t pin)
+void Gpio::toglePin (uint8_t pin)
 {
 	GpioBase [arrPort [prt]]->PTOR |= 1 << (pin+arrPinShift[prt]);
 }
