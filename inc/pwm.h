@@ -1,15 +1,9 @@
-#include "MK02F12810.h"
-#include "gpio.h"
+#include "MKE04Z1284.h"
 #include "ftm.h"
 
-namespace PwmDef
-{
-//===Defenitions===//
-//CS
-const Gpio::Port PwmPort = Gpio::C;
-const uint8_t PwmPin = 1;
 
-}
+//===Defenitions===//
+
 
 
 
@@ -20,7 +14,7 @@ const uint8_t PwmPin = 1;
 class Pwm;
 
 
-class Pwm : public Ftm
+class Pwm
 {
   //variables
 public:
@@ -31,19 +25,21 @@ public:
 
 private:
 	using PtrPwm = void(Pwm::*)(Pwm::pulseMode) ;
-	Gpio pin;
 	static PtrPwm funcMode [3];
-
+	Ftm * timer;
+	Ftm::channel pwmChannel;
+	FTM_MemMapPtr ptrTimer;
 
 public:
-	Pwm (nFtm n_, channel ch, mode, pulseMode);
-
+	Pwm (Ftm &, Ftm::channel ch, mode, pulseMode);
+	void setValue (uint16_t);
 
 private:
 	void setMode ();
 	void setEdgePwm (pulseMode m);
 	void setCenterPwm ();
 	void setCombinePwm ();
+
 
 };
 

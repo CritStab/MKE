@@ -39,9 +39,9 @@ public:
   bool pinState (uint8_t pin);
 
   //function for port
-  void settingPort (uint32_t val, mode m = Output);
-  void setValPort (uint32_t value);
-  void clearValPort (uint32_t value);
+  void settingPort (uint8_t val, mode m = Output);
+  void setValPort (uint8_t value);
+  void clearValPort (uint8_t value);
 };
 
 #endif

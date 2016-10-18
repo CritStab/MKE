@@ -1,4 +1,4 @@
-#include "MK02F12810.h"
+#include "MKE04Z1284.h"
 #include "tact.h"
 
 
@@ -26,7 +26,7 @@ protected:
 
 
 public:
-	Ftm (nFtm n_, sourceClock s = System_clk);
+	Ftm (nFtm n_, division, sourceClock s = System_clk);
 	void setChannel (channel & ch);
 	void setDivision (division div);
 	void setPeriod (const uint16_t &);
@@ -38,6 +38,7 @@ public:
 	void interruptDisable ();
 	void start ();
 	void stop ();
+	FTM_MemMapPtr getPtrTimer (){return ftm_ptr[num_ftm];}
 
 private:
 

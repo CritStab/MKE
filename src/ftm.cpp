@@ -4,13 +4,14 @@ FTM_MemMapPtr Ftm::ftm_ptr[3]={FTM0, FTM1, FTM2};
 IRQn Ftm::n_interrupt [3]= {FTM0_IRQn, FTM1_IRQn, FTM2_IRQn};
 
 
-Ftm::Ftm (nFtm n_, sourceClock s)
+Ftm::Ftm (nFtm n_, division div, sourceClock s)
 {
-	SIM->SCGC6 |= 1 << (SIM_SCGC6_FTM0_SHIFT+n_);
+	SIM->SCGC |= 1 << (SIM_SCGC_FTM0_SHIFT+n_);
 	//FTM_MODE_REG(ftm_ptr[num_ftm]) |= FTM_MODE_WPDIS_MASK;
 	num_ftm = n_;
 	s_clock = s;
-	FTM_SC_REG(ftm_ptr[num_ftm]) &= ~FTM_SC_CLKS_MASK;
+	FTM_SC_REG(ftm_ptr[num_ftm]) &= ~(FTM_SC_CLKS_MASK|FTM_SC_PS(0x07));
+	FTM_SC_REG(ftm_ptr[num_ftm]) |= FTM_SC_PS(div);
 }
 
 void Ftm::setChannel (channel & ch)

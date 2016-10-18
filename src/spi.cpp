@@ -25,6 +25,8 @@ Spi::Spi (nSpi nspi_, Mode mode_, pinSet pinS_, Role role_)
 	//Turn on tacting Spi
 	n = nspi_;
 	SIM->SCGC |= 1 << SIM_SCGC_SPI0_SHIFT+nspi_;
+	spiBase [n]->C1 &= ~SPI_C1_MSTR_MASK;
+	spiBase [n]->C1 |= role_ << SPI_C1_MSTR_SHIFT;
 	if (nspi_)
 		{
 			SIM->PINSEL &=  ~SIM_PINSEL_SPI0PS_MASK;

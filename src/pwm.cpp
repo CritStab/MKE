@@ -3,21 +3,21 @@
 Pwm::PtrPwm Pwm::funcMode [3] = {&Pwm::setEdgePwm};
 
 
-Pwm::Pwm (nFtm n_, channel ch, mode m, pulseMode m_)
-:Ftm (n_)
+Pwm::Pwm (Ftm &t, Ftm::channel ch, mode mode_, pulseMode m_)
 {
-	setChannel(ch);
-	(this->*(Pwm::funcMode[m]))(m_);
-	pin.settingPinPort(PwmDef::PwmPort);
-	pin.settingPin(PwmDef::PwmPin, Gpio::Alt4);
+	pwmChannel = ch;
+	timer = &t;
+	ptrTimer = timer->getPtrTimer();
+	(this->*(Pwm::funcMode[mode_]))(m_);
+	timer->start();
 }
 
 void Pwm::setEdgePwm (pulseMode m)
 {
-	FTM_SC_REG(ftm_ptr[num_ftm]) &= ~FTM_SC_CPWMS_MASK;
-	FTM_CnSC_REG(ftm_ptr[num_ftm], num_ch) |= FTM_CnSC_MSB_MASK;
-	FTM_CnSC_REG(ftm_ptr[num_ftm], num_ch) &= ~(FTM_CnSC_ELSA_MASK|FTM_CnSC_ELSB_MASK);
-	FTM_CnSC_REG(ftm_ptr[num_ftm], num_ch) |= m << FTM_CnSC_ELSA_SHIFT;
+	ptrTimer->SC &= ~FTM_SC_CPWMS_MASK;
+	ptrTimer->CONTROLS[pwmChannel].CnSC |= FTM_CnSC_MSB_MASK;
+	ptrTimer->CONTROLS[pwmChannel].CnSC &= ~(FTM_CnSC_ELSA_MASK|FTM_CnSC_ELSB_MASK);
+	ptrTimer->CONTROLS[pwmChannel].CnSC |= m << FTM_CnSC_ELSA_SHIFT;
 }
 
 void Pwm::setCenterPwm ()
@@ -29,3 +29,9 @@ void Pwm::setCombinePwm ()
 {
 
 }
+
+void Pwm::setValue (uint16_t val)
+{
+	ptrTimer->CONTROLS[pwmChannel].CnV = val;
+}
+

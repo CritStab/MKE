@@ -63,17 +63,19 @@ bool Gpio::pinState (uint8_t pin)
 	return (GpioBase [arrPort [prt]]->PDIR&(1 << (pin+arrPinShift[prt])));
 }
 
-void Gpio::settingPort (uint32_t value, mode m )
+void Gpio::settingPort (uint8_t value, mode m )
 {
-
+	GpioBase [arrPort [prt]]->PDDR &=~ (value << arrPinShift[prt]);
+	GpioBase [arrPort [prt]]->PDDR |= value << arrPinShift[prt];
 }
 
-void Gpio::setValPort (uint32_t value)
+void Gpio::setValPort (uint8_t value)
 {
-
+	GpioBase [arrPort [prt]]->PSOR |= value << arrPinShift[prt];
 }
 
-void Gpio::clearValPort (uint32_t value)
+void Gpio::clearValPort (uint8_t value)
 {
+	GpioBase [arrPort [prt]]->PCOR |= value << arrPinShift[prt];
 }
 

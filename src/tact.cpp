@@ -21,6 +21,7 @@ void Tact::initFEI ()
 
 	/* SIM->CLKDIV:OUTDIV1=0 (core clock), OUTDIV2=0 (bus clock), OUTDIV3=0 (pwt/ftm clock)*/
 	SIM->CLKDIV = SIM_CLKDIV_OUTDIV1(0x00)|SIM_CLKDIV_OUTDIV2_MASK; /* Update system prescalers */
+	SIM->CLKDIV |= SIM_CLKDIV_OUTDIV3_MASK;
 	/* Switch to FEI Mode */
 	/* ICS_C1: CLKS=0,RDIV=0,IREFS=1,IRCLKEN=1,IREFSTEN=0 */
 	ICS->C1 = ICS_C1_CLKS(0x00) |
