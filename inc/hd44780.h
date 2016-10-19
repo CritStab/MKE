@@ -1,4 +1,4 @@
-#include "MK02F12810.h"               // Device header
+#include "MKE04Z1284.h"                // Device header
 #include "gpio.h"
 #include "delay.h"
 
@@ -32,6 +32,9 @@ const uint8_t second_col = 0x40;
 
 const uint8_t set_cgram_addr = 0x40;
 
+//Bus defenition
+const uint8_t busPin = 0x0F;
+
 class Hd44780
 {
 //variables
@@ -50,7 +53,7 @@ private:
 
 //functions
 public:
-	Hd44780();
+	Hd44780(Gpio::Port);
 	void init ();
 	void tetra (uint8_t t);
 	void command (uint8_t com);

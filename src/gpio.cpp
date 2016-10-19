@@ -1,6 +1,7 @@
 #include "gpio.h"
 
 GPIO_Type * Gpio::GpioBase [3] = {GPIOA , GPIOB , GPIOC};
+PORT_Type * Gpio::PortBase [3] = {};
 
 uint8_t Gpio::arrPort [9] = {0,0,0,0,1,1,1,1,2};
 uint8_t Gpio::arrPinShift [9] = {0,8,16,24,0,8,16,24,0};
@@ -30,12 +31,10 @@ void Gpio::settingPin (uint8_t pin , mode m)
 
 void Gpio::PuPdPin (uint8_t pin, state s, PP p)
 {
-
+	PORT->PUE0 &=~ (1 << (pin+arrPinShift[prt]*prt));
+	PORT->PUE0 |= s << (pin+arrPinShift[prt]*prt);
 }
 
-void Gpio::PuPdPin (uint8_t pin, uint8_t s, uint8_t p)
-{
-}
 
 void Gpio::setPin (uint8_t pin )
 {
@@ -78,4 +77,30 @@ void Gpio::clearValPort (uint8_t value)
 {
 	GpioBase [arrPort [prt]]->PCOR |= value << arrPinShift[prt];
 }
+
+void Gpio::setFltDiv2 (busclkDivision &div)
+{
+	PORT->IOFLT0 &= ~ PORT_IOFLT0_FLTDIV2_MASK;
+	PORT->IOFLT0 |= PORT_IOFLT0_FLTDIV2(div);
+}
+
+void Gpio::setFltDiv1 (busclkDivision &div)
+{
+	PORT->IOFLT0 &= ~ PORT_IOFLT0_FLTDIV1_MASK;
+	PORT->IOFLT0 |= PORT_IOFLT0_FLTDIV1(div);
+}
+
+void Gpio::setFltDiv3 (lpoclkDivision &div)
+{
+	PORT->IOFLT0 &= ~ PORT_IOFLT0_FLTDIV3_MASK;
+	PORT->IOFLT0 |= PORT_IOFLT0_FLTDIV3(div);
+}
+
+void Gpio::setFilter (sourceFilter &s, clkFilter &d)
+{
+	PORT->IOFLT0 &= ~( (uint8_t)d << (uint8_t)s);
+	PORT->IOFLT0 |= (uint8_t)d << (uint8_t)s;
+}
+
+
 

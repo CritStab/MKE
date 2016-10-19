@@ -1,10 +1,11 @@
 #include "hd44780.h"
 
 
-Hd44780::Hd44780()
-:pin (Gpio::D)
+Hd44780::Hd44780(Gpio::Port p)
+
 {
-	pin.settingPort ((0x0F<<shift_data)|1 << RS | 1 << E);
+	pin.settingPinPort(p);
+	pin.settingPort ((0x0F<<shift_data)|1 << RS | 1 << E | 1 << RW);
 	init();
 	position=0;
 }
@@ -103,7 +104,7 @@ void Hd44780::newChar (const char *ch, uint8_t addr)
 
 void Hd44780::check_busy ()
 {
-	pin.settingPinDirection(D7, Gpio::Input);
+	pin.settingPin(D7, Gpio::Input);
 	pin.PuPdPin(D7, Gpio::On, Gpio::PullUp);
 	RW_disassert();
 	uint8_t state;
@@ -120,7 +121,7 @@ void Hd44780::check_busy ()
 	}
 	while (state);
 	pin.PuPdPin(D7, Gpio::Off, Gpio::PullUp);
-	pin.settingPinDirection(D7, Gpio::Output);
+	pin.settingPin(D7, Gpio::Output);
 }
 
 void Hd44780::Shift(Shifter s, Direction d, uint8_t val)

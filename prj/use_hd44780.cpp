@@ -1,4 +1,4 @@
-#include "MK02F12810.h"                 // Device header
+#include "MKE04Z1284.h"                // Device header
 #include "gpio.h"
 #include "tact.h"
 #include "delay.h"
@@ -9,21 +9,25 @@
 
 Tact frq;
 Pit Stimer(Pit::ch1, 2000, Pit::ms);
-Hd44780 display;
+Hd44780 display (Gpio::C);
 Buffer temp_iron(3);
 Buffer temp_heat_gun(3);
+Buffer adcVal (3);
+Gpio A (Gpio::A);
+
 
 
 const uint8_t led = 4;
 const uint16_t val_iron = 230;
 const uint16_t val_gun = 260;
+const uint8_t adcPin = 1;
 
 extern "C" {
 	void SysTick_Handler();
-	void PIT1_IRQHandler();
+	void PIT_CH1_IRQHandler();
 }
 
-void PIT1_IRQHandler()
+void PIT_CH1_IRQHandler()
 {
 	static bool flag;
 	Stimer.clear_flag();
@@ -56,10 +60,15 @@ const char * menu_iron = "Solder Iron";
 const char * menu_heat_gun = "Heat Gun";
 
 void menu();
-
+void initAdc (uint8_t n);
+uint16_t getAdc (uint8_t n);
+void initIrq ();
+void initFilter (Gpio &, uint8_t pin_);
 
 int main()
 {
+	initIrq();
+	initAdc (adcPin);
 	temp_iron.pars(val_iron);
 	temp_heat_gun.pars(val_gun);
 	menu();
@@ -68,6 +77,8 @@ int main()
 
 	while (1)
 	{
+		adcVal.pars(getAdc (adcPin));
+		delay_ms(10);
 	}
 }
 
@@ -83,4 +94,40 @@ void menu()
 	display.send_string(temp_heat_gun.getArray());
 }
 
+void initAdc (uint8_t n)
+{
+	SIM->SCGC |= SIM_SCGC_ADC_MASK|ADC_SC2_ADTRG_MASK;
+	ADC->SC2 &= ~ ADC_SC2_REFSEL_MASK;
+	//ADC->SC2 |=  ADC_SC2_REFSEL(1);
 
+	ADC->SC3 &=  ~ (ADC_SC3_ADICLK_MASK|ADC_SC3_ADIV_MASK|ADC_SC3_MODE_MASK);
+	ADC->SC3 |= ADC_SC3_ADIV(3) | ADC_SC3_MODE(2);
+	ADC->APCTL1 |= 1 << n;
+}
+
+uint16_t getAdc (uint8_t n)
+{
+	ADC->SC1 = ADC_SC1_ADCH(n);
+	while (!ADC->SC1&ADC_SC1_COCO_MASK);
+	return ADC->R;
+}
+
+void initIrq ()
+{
+	SIM->SCGC |= SIM_SCGC_IRQ_MASK;
+
+	PORT->IOFLT0 &=~ PORT_IOFLT0_FLTDIV2_MASK;
+	PORT->IOFLT0 |=PORT_IOFLT0_FLTDIV2(2);
+	PORT->IOFLT1 &= ~PORT_IOFLT1_FLTIRQ_MASK;
+	PORT->IOFLT1 |= PORT_IOFLT1_FLTIRQ(2);
+
+	//falling edge
+	IRQ->SC &= ~ (IRQ_SC_IRQEDG_MASK | IRQ_SC_IRQMOD_MASK);
+	IRQ->SC |= IRQ_SC_IRQPDD_MASK | IRQ_SC_IRQPE_MASK;
+}
+
+void initFilter (Gpio &pin, uint8_t pin_)
+{
+	pin.settingPin(pin_, Gpio::Input);
+
+}
