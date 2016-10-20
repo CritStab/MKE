@@ -6,7 +6,7 @@ namespace ShiftDef
 {
 //===Defenitions===//
 //CS
-const Gpio::Port CsPort = Gpio::C;
+const Gpio::Port CsPort = Gpio::Port::C;
 const uint8_t CsPin = 0;
 }
 

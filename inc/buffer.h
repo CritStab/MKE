@@ -7,8 +7,9 @@
 class Buffer
 {
 public:
-	static const uint8_t Array_char [10];
+
 private:
+	static const uint8_t Array_char [10];
 	uint8_t n;
 	uint8_t count;
 	char arr [];

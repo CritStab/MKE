@@ -5,15 +5,17 @@
 #include "hd44780.h"
 #include "buffer.h"
 #include "pit.h"
+#include "filter.h"
 
 
 Tact frq;
 Pit Stimer(Pit::ch1, 2000, Pit::ms);
-Hd44780 display (Gpio::C);
+Hd44780 display (Gpio::Port::C);
 Buffer temp_iron(3);
 Buffer temp_heat_gun(3);
 Buffer adcVal (3);
-Gpio A (Gpio::A);
+Gpio A (Gpio::Port::A);
+Filter irqFilter;
 
 
 
@@ -65,8 +67,11 @@ uint16_t getAdc (uint8_t n);
 void initIrq ();
 void initFilter (Gpio &, uint8_t pin_);
 
+
 int main()
 {
+	irqFilter.setFltDiv2(Filter::busclkDivision::div128);
+	irqFilter.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
 	initIrq();
 	initAdc (adcPin);
 	temp_iron.pars(val_iron);
@@ -128,6 +133,6 @@ void initIrq ()
 
 void initFilter (Gpio &pin, uint8_t pin_)
 {
-	pin.settingPin(pin_, Gpio::Input);
+	pin.settingPin(pin_, Gpio::mode::Input);
 
 }

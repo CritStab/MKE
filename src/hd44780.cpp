@@ -104,8 +104,8 @@ void Hd44780::newChar (const char *ch, uint8_t addr)
 
 void Hd44780::check_busy ()
 {
-	pin.settingPin(D7, Gpio::Input);
-	pin.PuPdPin(D7, Gpio::On, Gpio::PullUp);
+	pin.settingPin(D7, Gpio::mode::Input);
+	pin.PuPdPin(D7, Gpio::state::On, Gpio::PP::PullUp);
 	RW_disassert();
 	uint8_t state;
 	do
@@ -120,8 +120,8 @@ void Hd44780::check_busy ()
 		E_disassert();
 	}
 	while (state);
-	pin.PuPdPin(D7, Gpio::Off, Gpio::PullUp);
-	pin.settingPin(D7, Gpio::Output);
+	pin.PuPdPin(D7, Gpio::state::Off, Gpio::PP::PullUp);
+	pin.settingPin(D7, Gpio::mode::Output);
 }
 
 void Hd44780::Shift(Shifter s, Direction d, uint8_t val)
