@@ -23,22 +23,23 @@ void Spi::set_baudrate (Spi &s, Division d)
 Spi::Spi (nSpi nspi_, Mode mode_, pinSet pinS_, Role role_)
 {
 	//Turn on tacting Spi
-	n = nspi_;
-	SIM->SCGC |= 1 << SIM_SCGC_SPI0_SHIFT+nspi_;
+	m = (uint8_t) mode_;
+	n = (uint8_t) nspi_;
+	SIM->SCGC |= 1 << SIM_SCGC_SPI0_SHIFT+ (uint8_t) nspi_;
 	spiBase [n]->C1 &= ~SPI_C1_MSTR_MASK;
-	spiBase [n]->C1 |= role_ << SPI_C1_MSTR_SHIFT;
-	if (nspi_)
+	spiBase [n]->C1 |= (uint8_t) role_ << SPI_C1_MSTR_SHIFT;
+	if ((uint8_t) nspi_)
 		{
 			SIM->PINSEL &=  ~SIM_PINSEL_SPI0PS_MASK;
-			SIM->PINSEL |= pinS_ << SIM_PINSEL_SPI0PS_SHIFT;
+			SIM->PINSEL |= (uint8_t) pinS_ << SIM_PINSEL_SPI0PS_SHIFT;
 		}
 	else
 	{
 		SIM->PINSEL1 &=  ~SIM_PINSEL1_SPI1PS_MASK;
-		SIM->PINSEL1 =  pinS_ << SIM_PINSEL1_SPI1PS_SHIFT;
+		SIM->PINSEL1 = (uint8_t) pinS_ << SIM_PINSEL1_SPI1PS_SHIFT;
 	}
 
-	(this->*(Spi::initFunc[mode_]))();
+	(this->*(Spi::initFunc[m]))();
 }
 
 void Spi::initHardware ()
@@ -75,13 +76,13 @@ void Spi::disassertCs ()
 void Spi::setCpol (Cpol c)
 {
 	spiBase [n]->C1 &= ~ SPI_C1_CPOL_MASK;
-	spiBase [n]->C1 |= c << SPI_C1_CPOL_SHIFT;
+	spiBase [n]->C1 |= (uint8_t) c << SPI_C1_CPOL_SHIFT;
 }
 
 void Spi::setCpha (Cpha c)
 {
 	spiBase [n]->C1 &= ~ SPI_C1_CPHA_MASK;
-	spiBase [n]->C1 |= c << SPI_C1_CPHA_SHIFT;
+	spiBase [n]->C1 |= (uint8_t) c << SPI_C1_CPHA_SHIFT;
 }
 
 void Spi::setBaudrate (Division d)

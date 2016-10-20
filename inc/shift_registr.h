@@ -18,7 +18,7 @@ class Shift
 private:
 	using ptrMode = void (Shift::*)();
 	using ptrSend = void (Shift::*)(uint8_t);
-	Spi::Mode mode_;
+	uint8_t mode_;
 	Gpio CS;
 	Spi * mod;
 	static ptrMode modeFunc [2];

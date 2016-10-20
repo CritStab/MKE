@@ -20,20 +20,20 @@ class Spi
 //variables
 public:
 
-	enum nSpi :uint8_t {spi0, spi1};
-	enum Division :uint8_t {div2 , div4 , div8 , div16 , div32 , div64 , div128 , div256, div512};
-	enum Role {slave , master};
-	enum Cpol : uint8_t {neg, pos};
-	enum Cpha : uint8_t {first, second};
-	enum Mode : bool {hardware, software};
-	enum State : bool {off, on};
-	enum pinSet : uint8_t {set0, set1};
+	enum class nSpi :uint8_t {spi0, spi1};
+	enum class Division :uint8_t {div2 , div4 , div8 , div16 , div32 , div64 , div128 , div256, div512};
+	enum class Role :uint8_t {slave , master};
+	enum class Cpol : uint8_t {neg, pos};
+	enum class Cpha : uint8_t {first, second};
+	enum class Mode : uint8_t {hardware, software};
+	enum class State : uint8_t {off, on};
+	enum class pinSet : uint8_t {set0, set1};
 
 private:
 	using PtrInitFunc = void (Spi::*)();
 
-	Mode m;
-	nSpi n;
+	uint8_t m;
+	uint8_t n;
 	static SPI_Type* spiBase [2];
 	Gpio cs;
 	uint8_t csPin;
@@ -43,7 +43,7 @@ private:
 //functions
 public:
 
-	Spi (nSpi, Mode , pinSet pinS_,Role r=master);
+	Spi (nSpi, Mode , pinSet pinS_,Role r = Role::master);
 
 	void initHardware ();
 	void initSoftware ();
@@ -52,10 +52,10 @@ public:
 	void assertCs ();
 	void disassertCs ();
 
-	Mode & getMode (){return m;}
+	uint8_t & getMode (){return m;}
 
-	void setCpol (Cpol c = neg);
-	void setCpha (Cpha c = first);
+	void setCpol (Cpol c = Cpol::neg);
+	void setCpha (Cpha c = Cpha::first);
 	void setBaudrate (Division d);
 
 	static void set_cpol (Spi &, Cpol c);

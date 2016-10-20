@@ -14,9 +14,9 @@ Shift::Shift(Spi &s)
 void Shift::setModeHw ()
 {
 	//settings SPI
-	mod->setCpha(Spi::first);
-	mod->setCpol(Spi::neg);
-	mod->setBaudrate(Spi::div8);
+	mod->setCpha(Spi::Cpha::first);
+	mod->setCpol(Spi::Cpol::neg);
+	mod->setBaudrate(Spi::Division::div8);
 }
 
 void Shift::setModeSw ()
@@ -25,9 +25,9 @@ void Shift::setModeSw ()
 	CS.settingPin(ShiftDef::CsPin);
 	CS.setPin(ShiftDef::CsPin);
 	//settings SPI
-	mod->setCpha(Spi::first);
-	mod->setCpol(Spi::neg);
-	mod->setBaudrate(Spi::div8);
+	mod->setCpha(Spi::Cpha::first);
+	mod->setCpol(Spi::Cpol::neg);
+	mod->setBaudrate(Spi::Division::div8);
 }
 
 void Shift::send (uint8_t data)
