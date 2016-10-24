@@ -33,7 +33,7 @@ public:
 
   void settingPin (uint8_t pin , mode m = mode::Output);
 
-  void PuPdPin (uint8_t pin, state s, PP p);
+  void PuPdPin (uint8_t pin, PP p);
   void setPin (uint8_t pin );
   void clearPin (uint8_t pin);
   void toglePin (uint8_t pin);

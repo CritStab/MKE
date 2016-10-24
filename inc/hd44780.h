@@ -44,7 +44,7 @@ public:
 	
 protected:
 private:
-	enum commPins {RS=4, E=5, RW=6, D7=3};
+	enum commPins {RS=5, E=7, RW=6, D7=3};
 	const char shift_data = 0;
 	uint8_t position;
 	//uint8_t custom_chars [][8];

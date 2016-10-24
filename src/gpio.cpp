@@ -23,14 +23,14 @@ void Gpio::settingPinPort (Port p)
 
 void Gpio::settingPin (uint8_t pin , mode m)
 {
-	GpioBase [arrPort [prt]]->PDDR &=~ 1 << (pin+arrPinShift[prt]);
+	GpioBase [arrPort [prt]]->PDDR &=~ (1 << (pin+arrPinShift[prt]));
 	GpioBase [arrPort [prt]]->PDDR |= (uint8_t)m << (pin+arrPinShift[prt]);
 }
 
-void Gpio::PuPdPin (uint8_t pin, state s, PP p)
+void Gpio::PuPdPin (uint8_t pin, PP p)
 {
-	PORT->PUE0 &=~ (1 << (pin+arrPinShift[prt]*prt));
-	PORT->PUE0 |= (bool)s << (pin+arrPinShift[prt]*prt);
+	PORT->PUE0 &= ~ (1 << (pin+arrPinShift[prt]));
+	PORT->PUE0 |= (uint8_t)p << (pin+arrPinShift[prt]);
 }
 
 

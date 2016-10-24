@@ -10,7 +10,7 @@
 
 Tact frq;
 Pit Stimer(Pit::ch1, 2000, Pit::ms);
-Hd44780 display (Gpio::Port::C);
+
 Buffer temp_iron(3);
 Buffer temp_heat_gun(3);
 Buffer adcVal (3);
@@ -28,7 +28,7 @@ extern "C" {
 	void SysTick_Handler();
 	void PIT_CH1_IRQHandler();
 }
-
+/*
 void PIT_CH1_IRQHandler()
 {
 	static bool flag;
@@ -43,7 +43,7 @@ void PIT_CH1_IRQHandler()
 		display.command(clear_counter);
 		flag = 1;
 	}
-}
+}*/
 
 
 
@@ -70,23 +70,25 @@ void initFilter (Gpio &, uint8_t pin_);
 
 int main()
 {
-	irqFilter.setFltDiv2(Filter::busclkDivision::div128);
+	/*irqFilter.setFltDiv2(Filter::busclkDivision::div128);
 	irqFilter.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
 	initIrq();
 	initAdc (adcPin);
 	temp_iron.pars(val_iron);
-	temp_heat_gun.pars(val_gun);
-	menu();
-	Stimer.interrupt_enable();
-	Stimer.start();
-
+	temp_heat_gun.pars(val_gun);*/
+	//menu();
+	/*Stimer.interrupt_enable();
+	Stimer.start();*/
+	Hd44780 display (Gpio::Port::C);
+	display.set_position(0,0);
+	display.send_string("Hello");
 	while (1)
 	{
 		adcVal.pars(getAdc (adcPin));
 		delay_ms(10);
 	}
 }
-
+/*
 void menu()
 {
 	display.set_position(0, 1);
@@ -97,7 +99,7 @@ void menu()
 	display.send_string(menu_heat_gun);
 	display.set_position(1, 17);
 	display.send_string(temp_heat_gun.getArray());
-}
+}*/
 
 void initAdc (uint8_t n)
 {
