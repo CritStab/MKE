@@ -9,6 +9,7 @@
 
 
 Tact frq;
+/*
 Pit Stimer(Pit::ch1, 2000, Pit::ms);
 
 Buffer temp_iron(3);
@@ -23,7 +24,7 @@ const uint8_t led = 4;
 const uint16_t val_iron = 230;
 const uint16_t val_gun = 260;
 const uint8_t adcPin = 1;
-
+*/
 extern "C" {
 	void SysTick_Handler();
 	void PIT_CH1_IRQHandler();
@@ -60,6 +61,7 @@ uint8_t new_char0[8]
 
 const char * menu_iron = "Solder Iron";
 const char * menu_heat_gun = "Heat Gun";
+const uint8_t led = 1;
 
 void menu();
 void initAdc (uint8_t n);
@@ -70,6 +72,8 @@ void initFilter (Gpio &, uint8_t pin_);
 
 int main()
 {
+	Gpio C (Gpio::Port::D);
+	C.settingPin(led);
 	/*irqFilter.setFltDiv2(Filter::busclkDivision::div128);
 	irqFilter.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
 	initIrq();
@@ -78,14 +82,16 @@ int main()
 	temp_heat_gun.pars(val_gun);*/
 	//menu();
 	/*Stimer.interrupt_enable();
-	Stimer.start();*/
+	Stimer.start();
 	Hd44780 display (Gpio::Port::C);
 	display.set_position(0,0);
-	display.send_string("Hello");
+	display.send_string("HELLO");*/
 	while (1)
 	{
-		adcVal.pars(getAdc (adcPin));
-		delay_ms(10);
+		C.toglePin(led);
+		delay_ms(1000);
+		/*adcVal.pars(getAdc (adcPin));
+		delay_ms(10);*/
 	}
 }
 /*
