@@ -1,23 +1,25 @@
 #include "MKE04Z1284.h"                 // Device header
 #include "tact.h"
-#include "gpio.h"
+#include "pin.h"
 #include "delay.h"
 
 
-Tact frq;
-Gpio B (Gpio::D);
 
-const uint8_t led = 7;
+Tact frq;
+
+
+const uint8_t ledPin = 7;
+
+
 
 int main ()
 {
-	B.settingPin(led);
-	//SIM->SOPT0 &= ~SIM_SOPT0_NMIE_MASK;
-
+	SIM->SOPT0 &= ~SIM_SOPT0_NMIE_MASK;
+	Pin led (Gpio::Port::A, ledPin, Gpio::out::PushPull);
 
 	while (1)
 	{
-		B.toglePin(led);
+		led.togle();
 		delay_ms(1000);
 	}
 }

@@ -1,82 +1,73 @@
 #include "hd44780.h"
 
 
-Hd44780::Hd44780(Gpio::Port p)
-
+Hd44780::Hd44780()
+:data_ (hd44780Def::dataPort, hd44780Def::dataPins),
+ d7 (hd44780Def::d7port, hd44780Def::d7pin, Gpio::out::PushPull),
+ rs (hd44780Def::rsport, hd44780Def::rspin, Gpio::out::PushPull),
+ e (hd44780Def::eport, hd44780Def::epin, Gpio::out::PushPull),
+ rw (hd44780Def::rwport, hd44780Def::rwpin, Gpio::out::PushPull)
 {
-	pin.settingPinPort(p);
-	pin.settingPort ((0x0F<<shift_data)|1 << RS | 1 << E | 1 << RW);
 	init();
 	position=0;
 }
 
 void Hd44780::init ()
 {
+	//8bit
 	delay_ms (16);
-	tetra (0x03);
+	tetra (0x30);
 	delay_ms (5);
-	tetra (0x03);
+	tetra (0x30);
 	delay_us (110);
-	tetra (0x03);
+	tetra (0x30);
 	delay_ms (1);
-	tetra (0x02);
+	tetra (0x38);
 	delay_ms (1);
-
-	// 2 strings
-	command (0x28);
+	tetra (0x0C);
 	delay_ms (1);
-	//turn on display
-	command (0x0C);
-	delay_ms (1);
-	command (0x06);
+	tetra (0x06);
 	delay_ms (1);
 	clear();
 }
 
 void Hd44780::tetra (uint8_t t)
 {
-	E_assert ();
-	pin.clearValPort (0x0F<<shift_data);
-	t &= 0x0F;
-	pin.setValPort(t<<shift_data);
+	e.set();
+	data_.clear(0xFF);
+	data_.set(t);
 	delay_us (2);
-	E_disassert ();
+	e.clear();
 }
 
 void Hd44780::command (uint8_t b)
 {
-	RW_assert();
-	check_busy();
-	uint8_t hb = 0;
-	hb = b >> 4;
-	RS_disassert ();
-	tetra (hb);
-	delay_us(1);
+	checkBusy ();
+	rs.clear();
 	tetra (b);
-	delay_us(1);
-	RW_disassert();
+}
+
+void Hd44780::initCommand (uint8_t com)
+{
+	rw.clear();
+	rs.clear();
+	tetra (com);
+	delay_us(50);
 }
 
 void Hd44780::data (char b)
 {
-	RW_assert();
-	check_busy();
-	uint8_t hb = 0;
-	hb = b >> 4;
-	RS_assert ();
-	tetra (hb);
-	delay_us(1);
+	checkBusy();
+	rs.set();
 	tetra (b);
-	delay_us(1);
-	RW_disassert();
 }
 
-void Hd44780::send_string (const char *str)
+void Hd44780::sendString (const char *str)
 {
 	while (*str) data (*str++);
 }
 
-void Hd44780::send_string (uint8_t n, const char *str)
+void Hd44780::sendString (uint8_t n, const char *str)
 {
 	for (uint8_t i=0;i<n;++i) data (*str++);
 }
@@ -87,7 +78,7 @@ void Hd44780::clear ()
 	delay_us (1500);
 }
 
-void Hd44780::set_position (uint8_t col, uint8_t row)
+void Hd44780::setPosition (uint8_t col, uint8_t row)
 {
 	uint8_t addr = second_col*col + row;
 	command (addr|set_dram_addr);
@@ -102,26 +93,21 @@ void Hd44780::newChar (const char *ch, uint8_t addr)
 	//send_byte (set_dram_addr, command);
 }
 
-void Hd44780::check_busy ()
+void Hd44780::checkBusy ()
 {
-	pin.settingPin(D7, Gpio::mode::Input);
-	pin.PuPdPin(D7, Gpio::PP::PullUp);
-	RW_disassert();
+	d7.setIn(Gpio::PP::PullUp);
+	rw.set();
+	rs.clear();
 	uint8_t state;
 	do
 	{
-		E_assert();
+		e.set();
 		delay_us(2);
-		state = pin.pinState(D7);
-		E_disassert();
-		delay_us(1);
-		E_assert();
-		delay_us(2);
-		E_disassert();
+		state = d7.state();
+		e.clear();
 	}
 	while (state);
-	//pin.PuPdPin(D7, Gpio::state::Off, Gpio::PP::PullUp);
-	pin.settingPin(D7, Gpio::mode::Output);
+	d7.setOut(Gpio::out::PushPull);
 }
 
 void Hd44780::Shift(Shifter s, Direction d, uint8_t val)
@@ -161,35 +147,3 @@ uint8_t Hd44780::get_Shift_position ()
 {
 	return position;
 }
-
-void Hd44780::RS_assert ()
-{
-	pin.setPin(RS);
-}
-
-void Hd44780::RS_disassert ()
-{
-	pin.clearPin(RS);
-}
-
-void Hd44780::E_assert ()
-{
-	pin.setPin(E);
-}
-
-void Hd44780::E_disassert ()
-{
-	pin.clearPin(E);
-}
-
-void Hd44780::RW_assert ()
-{
-	pin.setPin(RW);
-}
-
-void Hd44780::RW_disassert ()
-{
-	pin.clearPin(RW);
-}
-
-

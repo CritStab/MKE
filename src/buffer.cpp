@@ -1,53 +1,113 @@
 #include "buffer.h"
 
-const uint8_t Buffer::Array_char [10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
 
-Buffer::Buffer(uint8_t size)
-{
-	arr [size+1];
-	n= size+1;
-	arr[size] = 0;
-	//uint8_t *ptr = new
+const uint16_t Buffer::divider [sizeDivider] = {10000, 1000, 100, 10};
+
+Buffer::Buffer()
+{	
+  arr[size-1] = 0;
 }
+
+
+
 
 uint8_t Buffer::getArraySize ()
 {
-	return n;
+  return n;
 }
 
-void Buffer::pars (const uint16_t & val)
+
+void Buffer::parsDec16 (const uint16_t & val)
 {
-	uint8_t tous, hundr, dec, ones;
+        uint8_t arrVal[5] = {0};
 	uint16_t temp = val;
-	count = 0;
-	for (tous=0;temp>=1000;++tous, ++count)temp-=1000;
-	for (hundr=0;temp>=100;++hundr, ++count)temp -=100;
-	for (dec=0;temp>=10;++dec, ++count)temp -=10;
-	ones = temp%10;
-	++count;
-		arr [0] = Array_char [tous];
-		arr [1] = Array_char [hundr];
-		arr [2] = Array_char [dec];
-		arr [3] = Array_char [ones];
-		arr [n] = 0;
-
-	/*arr [0] = Array_char [tous];
-	arr [1] = Array_char [hundr];
-	arr [2] = Array_char [dec];
-	arr [3] = Array_char [ones];
-	arr [count] = '\0';*/
+        uint8_t * tempPtr = arrVal;
+	count = 5;
+	for (arrVal[0]=0;temp>=10000;++arrVal[0]) temp -= 10000;
+	
+	for (arrVal[1]=0;temp>=1000;++arrVal[1])temp-=1000;
+	
+	for (arrVal[2]=0;temp>=100;++arrVal[2])temp -=100;
+	
+	for (arrVal[3]=0;temp>=10;++arrVal[3])temp -=10;
+	
+	arrVal[4] = temp%10;
+        
+        while (!*tempPtr++)
+        {
+          --count;
+        }
+        if (count<1)count = 1;
+        for (uint8_t i=size-1-count, j=5-count;j<5;++i,++j)
+        {
+          arr [i] = font [arrVal[j]];
+        }
+        if (arrVal [2] ==0) arr [2] = font [10];
+        
+        //arr [3] = ArraySegDpChar [arrVal[3]];
+	real = &arr [(size-1)-count];
 }
+
+void Buffer::parsDec16 (const uint16_t & val, uint8_t n)
+{
+  uint8_t arrVal[5] = {0};
+  uint16_t temp = val;
+  uint8_t k = sizeDivider-n;
+  for (uint8_t i=0;i<n-1;++i)
+  {
+    for (arrVal[k+i]=0;temp>=divider[k+i]; ++arrVal[k+i]) temp-= divider[k+i];
+    arr [k+i] = font [arrVal[k+i]];
+  }
+  arrVal [4] = val%10;
+  arr [4] = font [arrVal [4]];
+  if (val < 100) arr [2] = font [10];
+  if (val < 10) 
+  {
+    arr [2] = font [10];
+    arr [3] = font [10];
+  }
+}
+
+void Buffer::parsFloat (const uint16_t & val)
+{
+ uint8_t arrVal[2] = {0};
+  uint16_t temp = val;
+  for (arrVal[0]=0;temp>=10;++arrVal[0])temp -=10;
+  arrVal [1] = temp%10;
+  arr [2] = font [arrVal [0]];
+  arr [3] = '.';
+  arr [4] = font [arrVal [1]];
+}
+
+void Buffer::parsHex32 (uint32_t value)
+{
+  arr [0] = hexChar [(value&0xF0000000)>>28];
+  arr [1] = hexChar [(value&0x0F000000)>>24];
+  arr [2] = hexChar [(value&0x00F00000)>>20];
+  arr [3] = hexChar [(value&0x000F0000)>>16];
+  arr [4] = hexChar [(value&0x0000F000)>>12];
+  arr [5] = hexChar [(value&0x00000F00)>>8];
+ /* arr [6] = hexChar [(value&0x000000F0)>>4];
+  arr [7] = hexChar [value&0x0F];*/
+}
+
 
 char * Buffer::getArray ()
 {
-	return arr;
+  return arr;
+}
+
+char * Buffer::getContent ()
+{
+  return real;
 }
 
 char * Buffer::getElement (uint8_t n)
 {
 	return &arr[n];
 }
+
 
 bool Buffer::setElement (uint8_t el, uint8_t val)
 {
@@ -57,5 +117,15 @@ bool Buffer::setElement (uint8_t el, uint8_t val)
 		arr [el] = val;
 		return true;
 	}
-
 }
+
+uint8_t Buffer::getCount ()
+{
+  return count;
+}
+
+void Buffer::setFont (const char *f)
+{
+  font = f;
+}
+

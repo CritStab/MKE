@@ -8,8 +8,8 @@ Pit::Pit (channel ch, uint16_t n, mode m)
 {
 	SIM->SCGC |= SIM_SCGC_PIT_MASK;
 	PIT->MCR = 0;
-	n_ch = ch;
-	(this->*(Pit::set_func[m]))(n);
+	n_ch = static_cast <uint8_t> (ch);
+	(this->*(Pit::set_func[static_cast <uint8_t> (m)]))(n);
 
 
 

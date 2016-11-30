@@ -14,14 +14,14 @@ class Pit
 {
   //variables
 public:
-	enum channel {ch0, ch1};
-	enum mode {khz, hz, ms, us};
+	enum class channel: uint8_t {ch0, ch1};
+	enum class mode: uint8_t {khz, hz, ms, us};
 private:
 	const uint8_t irq_n = 22;
 	uint8_t n_ch;
 	static ptr set_func [4];
 public:
-	Pit(channel ch, uint16_t n, mode m = ms);
+	Pit(channel ch, uint16_t n, mode m = mode::ms);
 	void clear_flag ();
 	bool flag_TIF ();
 	void start ();

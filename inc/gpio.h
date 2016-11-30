@@ -16,7 +16,7 @@ public:
   enum class state : bool {Off, On};
 
 
-private:
+protected:
   static GPIO_Type* GpioBase [3];
   static PORT_Type* PortBase [3];
   static uint8_t arrPort [9];

@@ -1,10 +1,31 @@
 #include "MKE04Z1284.h"                // Device header
-#include "gpio.h"
+#include "port.h"
+#include "pin.h"
 #include "delay.h"
 
 #ifndef HD44780_H
 #define HD44780_H
 
+#define bit8
+
+namespace hd44780Def
+{
+  //Port
+  const Gpio::Port dataPort = Gpio::Port::D;
+  const uint8_t dataPins = 0xFF;
+  //D7
+  const Gpio::Port d7port = Gpio::Port::D;
+  const uint8_t d7pin = 1 << 7;
+  //E
+  const Gpio::Port eport = Gpio::Port::D;
+  const uint8_t epin = 4;
+  //RS
+  const Gpio::Port rsport = Gpio::Port::D;
+  const uint8_t rspin = 6;
+  //RW
+  const Gpio::Port rwport = Gpio::Port::D;
+  const uint8_t rwpin = 5;
+}
 
 //COMMANDS
 
@@ -44,33 +65,27 @@ public:
 	
 protected:
 private:
-	enum commPins {RS=5, E=7, RW=6, D7=3};
 	const char shift_data = 0;
 	uint8_t position;
 	//uint8_t custom_chars [][8];
-	Gpio pin;
+	Pin rs, e, rw, d7;
+	Port data_;
 	unsigned int x_start, x_end, y_start, y_end;
 
 //functions
 public:
-	Hd44780(Gpio::Port);
+	Hd44780();
 	void init ();
 	void tetra (uint8_t t);
 	void command (uint8_t com);
-	void init_command (uint8_t com);
+	void initCommand (uint8_t com);
 	void data (char data) ;
-	void send_string (const char *str) ;
-	void send_string (uint8_t n, const char *str) ;
+	void sendString (const char *str) ;
+	void sendString (uint8_t n, const char *str) ;
 	void clear ();
-	void set_position (uint8_t col, uint8_t row);
+	void setPosition (uint8_t col, uint8_t row);
 	void newChar (const char *ch, uint8_t addr);
-	void RS_assert ();
-	void RS_disassert ();
-	void E_assert ();
-	void E_disassert ();
-	void RW_assert ();
-	void RW_disassert ();
-	void check_busy ();
+	void checkBusy ();
 	void Shift (Shifter s, Direction d, uint8_t val);
 	void Shift_simple (Shifter s, Direction d, uint8_t val);
 	void set_shift_position (uint8_t pos);

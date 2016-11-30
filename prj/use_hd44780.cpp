@@ -1,30 +1,13 @@
 #include "MKE04Z1284.h"                // Device header
-#include "gpio.h"
 #include "tact.h"
 #include "delay.h"
 #include "hd44780.h"
 #include "buffer.h"
 #include "pit.h"
-#include "filter.h"
 
 
 Tact frq;
-/*
-Pit Stimer(Pit::ch1, 2000, Pit::ms);
 
-Buffer temp_iron(3);
-Buffer temp_heat_gun(3);
-Buffer adcVal (3);
-Gpio A (Gpio::Port::A);
-Filter irqFilter;
-
-
-
-const uint8_t led = 4;
-const uint16_t val_iron = 230;
-const uint16_t val_gun = 260;
-const uint8_t adcPin = 1;
-*/
 extern "C" {
 	void SysTick_Handler();
 	void PIT_CH1_IRQHandler();
@@ -59,53 +42,17 @@ uint8_t new_char0[8]
 0x1F,
 };
 
-const char * menu_iron = "Solder Iron";
-const char * menu_heat_gun = "Heat Gun";
-const uint8_t led = 1;
-
-void menu();
-void initAdc (uint8_t n);
-uint16_t getAdc (uint8_t n);
-void initIrq ();
-void initFilter (Gpio &, uint8_t pin_);
-
-
 int main()
 {
-	Gpio C (Gpio::Port::D);
-	C.settingPin(led);
-	/*irqFilter.setFltDiv2(Filter::busclkDivision::div128);
-	irqFilter.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
-	initIrq();
-	initAdc (adcPin);
-	temp_iron.pars(val_iron);
-	temp_heat_gun.pars(val_gun);*/
-	//menu();
-	/*Stimer.interrupt_enable();
-	Stimer.start();
-	Hd44780 display (Gpio::Port::C);
-	display.set_position(0,0);
-	display.send_string("HELLO");*/
+	Hd44780 lcd;
+	lcd.send_string("Hello!!!");
+
+
 	while (1)
 	{
-		C.toglePin(led);
 		delay_ms(1000);
-		/*adcVal.pars(getAdc (adcPin));
-		delay_ms(10);*/
 	}
 }
-/*
-void menu()
-{
-	display.set_position(0, 1);
-	display.send_string(menu_iron);
-	display.set_position(1, 1);
-	display.send_string(temp_iron.getArray());
-	display.set_position(0, 17);
-	display.send_string(menu_heat_gun);
-	display.set_position(1, 17);
-	display.send_string(temp_heat_gun.getArray());
-}*/
 
 void initAdc (uint8_t n)
 {
