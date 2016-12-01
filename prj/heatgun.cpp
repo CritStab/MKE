@@ -220,7 +220,12 @@ int main()
   initDataPosition ();
 
   filters.setFltDiv2 (Filter::busclkDivision::div4096);
-  filters.setFltDiv3(Filter::lpoclkDivision::div64);
+  filters.setFltDiv3(Filter::lpoclkDivision::div16);
+  //set 5.8kHz for encoder
+  filters.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
+  //set 62.5hz==16ms for button and tilt sensor
+  filters.setFilter(Filter::sourceFilter::PTA, Filter::clkFilter::lpoclk);
+  filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
 
   adcTrigger.start();
   Systimer mainLoop (Systimer::mode::ms, 1);
