@@ -4,30 +4,22 @@
 
 //===Defenitions===//
 
-
-
-
-
 #ifndef PWM_H
 #define PWM_H
-
-class Pwm;
-
 
 class Pwm
 {
   //variables
 public:
 
-	enum mode {EdgePwm, CenterPwm, CombinePwm};
-	enum pulseMode {highPulse=2, lowPulse};
-
+	enum class mode {EdgePwm, CenterPwm, CombinePwm};
+	enum class pulseMode {highPulse=2, lowPulse};
 
 private:
 	using PtrPwm = void(Pwm::*)(Pwm::pulseMode) ;
 	static PtrPwm funcMode [3];
 	Ftm * timer;
-	Ftm::channel pwmChannel;
+	uint8_t pwmChannel;
 	FTM_MemMapPtr ptrTimer;
 
 public:
@@ -39,10 +31,6 @@ private:
 	void setEdgePwm (pulseMode m);
 	void setCenterPwm ();
 	void setCombinePwm ();
-
-
 };
-
-
 
 #endif

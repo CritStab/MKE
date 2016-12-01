@@ -22,7 +22,6 @@ Pin::Pin (Port port, uint8_t p)
 	pin_ = p;
 }
 
-
 void Pin::setIn (PP pp_)
 {
 	GpioBase [arrPort [prt]]->PDDR &= ~( 1 << (pin_+arrPinShift[prt]));

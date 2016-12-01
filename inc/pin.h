@@ -18,6 +18,7 @@ public:
 	Pin (Port port, uint8_t p , out o);
 	Pin (Port port, uint8_t p , PP m);
 	Pin (Port port, uint8_t p);
+	Pin (Port port);
 	void setIn (PP pp_);
 	void setOut (out o=out::PushPull);
 	void set();

@@ -8,11 +8,15 @@
 #include "senc.h"
 #include "pid.h"
 #include "pit.h"
-
+#include "systimer.h"
+#include "adc.h"
+#include "ftm.h"
+#include "pwm.h"
+#include "filter.h"
 
 extern "C" {
-	void SysTick_Handler();
-	void PIT_CH1_IRQHandler();
+	void SysTick_IRQHandler();
+	void ADC_IRQHandler();
 }
 
 //pid value
@@ -21,17 +25,14 @@ const double p  = 9.0;
 const double i  = 2.0;
 const double d  = 3.0;
 
-const uint8_t buttEncPin = 1;
+const uint8_t buttEncPin = 0;
 const uint8_t tiltPin = 2;
-//const uint8_t heaterPin = 3;
-//const uint8_t fanPin = 3;
+
 const uint8_t encAPin = 4;
 const uint8_t encBPin = 5;
 
 const uint16_t TsetVal=250;
 const uint16_t speedVal=60;
-
-uint16_t adcValue [8] = {0};
 
 const char cursorChar[8] =
 { 
@@ -65,7 +66,14 @@ Button tilt (Gpio::Port::A, tiltPin);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
 Senc encoder (Gpio::Port::B, encAPin, Gpio::Port::B, encBPin, 100);
-Pit mainLoop (Pit::channel::ch1, 1, Pit::mode::ms);
+Pit adcTrigger (Pit::channel::ch1, 100, Pit::mode::ms);
+Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::trigger::pit1);
+Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div32, 150);
+Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div128, 37500);
+Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Filter filters;
 
 
 typedef void (*PtrF)();
@@ -89,7 +97,7 @@ struct flags
   unsigned encShortPress : 2;
   unsigned encReady : 1;
   unsigned screens :1;
-  unsigned shift :1;
+  unsigned shift :2;
 }flag;
 
 struct position
@@ -125,8 +133,11 @@ void getMainScreen ();
 void getPidScreen ();
 PtrF screenF [2] = {&getMainScreen, &getPidScreen};
 
+//button action
 void changeLpFlag ();
 void changeSpFlag ();
+
+
 void initHeater ();
 void initFun ();
 void scan_enc ();
@@ -134,82 +145,65 @@ void initPosition ();
 void initDataPosition ();
 void clearCursors ();
 
-void PIT_CH1_IRQHandler()
+void SysTick_IRQHandler()
 {
-  static struct counters
-  {
-    uint8_t lcd;
-    uint8_t adc;
-    uint8_t pid;
-    //uint8_t button;
-  }counter = {0,0,0};
-  mainLoop.clear_flag();
-  ++counter.lcd;
-  ++counter.adc;
-  ++counter.pid;
-  //++counter.button;
-
-
     buttonEncoder.scanButton ();
     buttonEncoder.scanAction();
     
-  
   //опрос энкодера при длительном нажатии кнопки
   if (flag.encLongPress)encoder.scan ();
-
-  if (counter.lcd>period.lcd)
+  if (flag.encLongPress)
   {
-    screenF [flag.screens]();
-    
-    if (flag.encLongPress)
-    {   
-      clearCursors ();
+	  clearCursors ();
       lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
       lcd.data (cursor);
       ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
-    }
-    //draw value
-    data **tempPtr = &ScreenVal[0][0];
-    for (uint8_t i=0;i<3;++i)
-      {
-      lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
-      value.parsDec16 ((*tempPtr)->value, 3);
-      lcd.sendString (value.getElement(2));
-      *tempPtr++; 
-      }
-      tempPtr = &ScreenVal[1][0];
-      for (uint8_t i=0;i<3;++i)
-      {
-      lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
-      value.parsFloat ((*tempPtr)->value);
-      lcd.sendString (value.getElement(2));
-      *tempPtr++; 
-      }
   }
-   
-   /*if (counter.adc>period.adc)
-  {
-    uint16_t tempAdc = 0;
-    for (uint8_t i=0;i<8;++i)
-    {
-      tempAdc += sensor.getValue();
-    }
-    currTemp.value = tempAdc >> 3;
-    counter.adc = 0;
-  } */
-  
- if (counter.pid>period.pid)
-  {
-    regulator.setP (pVal.value);
-    regulator.setI (iVal.value);
-    regulator.setD (dVal.value);
-    pidVal.value = regulator.compute (currTemp.value);
-    counter.pid = 0;    
-  }
-
 }
 
+void ADC_IRQHandler()
+{
+	uint16_t tempAdc = 0;
+    for (uint8_t i=0;i<8;++i)
+    {
+      tempAdc += ADC->R;
+    }
 
+    currTemp.value = tempAdc >> 3;
+
+	//update PID
+	regulator.setP (pVal.value);
+	regulator.setI (iVal.value);
+	regulator.setD (dVal.value);
+
+	//calculate PID
+	pidVal.value = regulator.compute (currTemp.value);
+	heater.setValue(pidVal.value);
+
+	//update fan speed
+	fan.setValue(speed.value);
+
+	//update screen
+	screenF [flag.screens]();
+
+	//draw value
+	data **tempPtr = &ScreenVal[0][0];
+	for (uint8_t i=0;i<3;++i)
+	{
+		lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
+	    value.parsDec16 ((*tempPtr)->value, 3);
+	    lcd.sendString (value.getElement(2));
+	    *tempPtr++;
+	}
+	tempPtr = &ScreenVal[1][0];
+	for (uint8_t i=0;i<3;++i)
+	{
+		lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
+	    value.parsFloat ((*tempPtr)->value);
+	    lcd.sendString (value.getElement(2));
+	    *tempPtr++;
+	}
+}
 
 int main()
 {
@@ -224,8 +218,12 @@ int main()
   //init pwm
   initPosition ();
   initDataPosition ();
-  encoder.setValue (speed.value);
-  mainLoop.interrupt_enable();
+
+  filters.setFltDiv2 (Filter::busclkDivision::div4096);
+  filters.setFltDiv3(Filter::lpoclkDivision::div64);
+
+  adcTrigger.start();
+  Systimer mainLoop (Systimer::mode::ms, 1);
   
   while (1)
   {
@@ -349,19 +347,7 @@ void changeLpFlag ()
 
 void changeSpFlag ()
 {
-  if (!flag.encLongPress)
-  {
-    if (flag.encShortPress) 
-    {
-    flag.encShortPress = 0;
-    flag.screens = 0;
-    }
-    else 
-    {
-      flag.encShortPress = 1;
-      flag.screens = 1;
-    }
-  }
+  if (!flag.encLongPress) flag.screens ^= 1;
 	
   else if (flag.encLongPress&&flag.screens)//screenPid
   {

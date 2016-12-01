@@ -1,43 +1,91 @@
 #include "adc.h"
 
-const uint8_t adc::pin_def [10][2] = {
-{E, 20},
-{E, 16},
-{E, 18},
-{E, 22},
-{E, 21},
-{E, 17},
-{E, 19},
-{E, 23},
-{B, 0},
-{D, 1}
-};
+//const uint8_t Adc::pinDef [10]= {20, 16, 18, 22, 21, 17, 19, 23, 0, 1};
 
-adc::adc(channel ch_, resolution r_)
+const Gpio::Port Adc::portDef [10] = {
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::E,
+Gpio::Port::B,
+Gpio::Port::D
+};
+Adc::Adc(channel ch_, resolution r_, divider d)
+:pin_ (portDef [(uint8_t)ch_])
 {
-	n_channel = ch_;
+	n_channel = static_cast<uint8_t> (ch_);
+
 	//tact ADC0
-	SIM->SCGC6 |= SIM_SCGC6_ADC0_MASK;
-	//Set busclock
-	ADC0->CFG1 &= ~ADC_CFG1_ADICLK_MASK;
-	//Set divider - 8
-	ADC0->CFG1 |= ADC_CFG1_ADIV(3);
-	ADC0->SC3 |= ADC_SC3_AVGE_MASK|ADC_SC3_AVGS(3);
-	ADC0->SC2 &= ~ ADC_SC2_ADTRG_MASK;
-	ADC0->SC3 |= ADC_SC3_CAL_MASK ;
-	while (!(ADC0->SC1[0]&ADC_SC1_COCO_MASK));
-	//Settings pins
-	/*pin.setPort (pin_def [n_channel][0]);
-	pin.setOutPin (pin_def [n_channel][1], 0);*/
-	ADC0->CFG1|= ADC_CFG1_ADLSMP_MASK|ADC_CFG1_MODE(r_);
+	SIM->SCGC |= SIM_SCGC_ADC_MASK;
+
+	//Set channel
+	ADC->APCTL1 |= 1 << n_channel;
+	//set clock source
+	ADC->SC3 &= ~ADC_SC3_ADICLK_MASK;
+	ADC->SC3 |= ADC_SC3_ADICLK(clockSource::busClock2);
+
+	//Set divider
+	ADC->SC3 &= ~ADC_SC3_ADIV_MASK;
+	ADC->SC3 |= ADC_SC3_ADIV(d);
+
+	//settings resolution
+	ADC->SC3 &= ~ ADC_SC3_MODE_MASK;
+	ADC->SC3 |= ADC_SC3_MODE(r_);
+
+	//Long sample
+	ADC->SC3 |= ADC_SC3_ADLSMP_MASK;
+
+	//soft trigger
+	ADC->SC2 &= ~ ADC_SC2_ADTRG_MASK;
+
+	//one conversion
+	ADC->SC1 &= ~ADC_SC1_ADCO_MASK;
 }
 
-uint16_t adc::convert ()
+Adc::Adc(channel ch_, resolution r_, trigger t, divider d )
+{
+	n_channel = static_cast<uint8_t> (ch_);
+
+	//tact ADC0
+	SIM->SCGC |= SIM_SCGC_ADC_MASK;
+
+	//Set channel
+	ADC->APCTL1 |= 1 << n_channel;
+
+	//set clock source
+	ADC->SC3 &= ~ADC_SC3_ADICLK_MASK;
+	ADC->SC3 |= ADC_SC3_ADICLK(clockSource::busClock2);
+
+	//Set divider
+	ADC->SC3 &= ~ADC_SC3_ADIV_MASK;
+	ADC->SC3 |= ADC_SC3_ADIV(d);
+
+	//settings resolution
+	ADC->SC3 &= ~ ADC_SC3_MODE_MASK;
+	ADC->SC3 |= ADC_SC3_MODE(r_);
+
+	//Long sample
+	ADC->SC3 |= ADC_SC3_ADLSMP_MASK;
+
+	//hard trigger
+	ADC->SC2 |= ADC_SC2_ADTRG_MASK;
+	SIM->SOPT0 &= ~SIM_SOPT0_ADHWT_MASK;
+	SIM->SOPT0 |= SIM_SOPT0_ADHWT(t);
+
+	//one conversion
+	ADC->SC1 &= ~ADC_SC1_ADCO_MASK;
+}
+
+uint16_t Adc::getData ()
 {
 	//Select 4 channal and start conversation
-	ADC0->SC1[0] = ADC_SC1_ADCH(n_channel);
-	while (!(ADC0->SC1[0]&ADC_SC1_COCO_MASK));
-	return ADC0->R[0];
+	ADC->SC1 |= ADC_SC1_ADCH(n_channel);
+	while (!(ADC->SC1&ADC_SC1_COCO_MASK));
+	return ADC->R;
 }
 
 
