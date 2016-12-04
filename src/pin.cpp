@@ -5,7 +5,8 @@ Pin::Pin (Port port, uint8_t p , out o)
 {
 	pin_ = p;
 	GpioBase [arrPort [prt]]->PDDR |= 1 << (pin_+arrPinShift[prt]);
-	PORT->PUE0 |= (uint8_t)o << (pin_+arrPinShift[prt]);
+	GpioBase [arrPort [prt]]->PIDR |= ( 1 << (pin_+arrPinShift[prt]));
+	PORT->PUE0  &= ~( (uint8_t)o << (pin_+arrPinShift[prt]));
 }
 
 Pin::Pin (Port port, uint8_t p , PP m)
@@ -13,6 +14,7 @@ Pin::Pin (Port port, uint8_t p , PP m)
 {
 	pin_ = p;
 	GpioBase [arrPort [prt]]->PDDR &= ~( 1 << (pin_+arrPinShift[prt]));
+	GpioBase [arrPort [prt]]->PIDR &= ~( 1 << (pin_+arrPinShift[prt]));
 	PORT->PUE0 |= (uint8_t)m << (pin_+arrPinShift[prt]);
 }
 
@@ -25,13 +27,15 @@ Pin::Pin (Port port, uint8_t p)
 void Pin::setIn (PP pp_)
 {
 	GpioBase [arrPort [prt]]->PDDR &= ~( 1 << (pin_+arrPinShift[prt]));
+	GpioBase [arrPort [prt]]->PIDR &= ~( 1 << (pin_+arrPinShift[prt]));
 	PORT->PUE0 |= (uint8_t)pp_ << (pin_+arrPinShift[prt]);
 }
 
 void Pin::setOut (out o)
 {
 	GpioBase [arrPort [prt]]->PDDR |= 1 << (pin_+arrPinShift[prt]);
-	PORT->PUE0 |= (uint8_t)o << (pin_+arrPinShift[prt]);
+	GpioBase [arrPort [prt]]->PIDR |= ( 1 << (pin_+arrPinShift[prt]));
+	PORT->PUE0 &= ~( (uint8_t)o << (pin_+arrPinShift[prt]));
 }
 
 void Pin::set()

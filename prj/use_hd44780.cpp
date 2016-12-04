@@ -4,31 +4,30 @@
 #include "hd44780.h"
 #include "buffer.h"
 #include "pit.h"
+#include "pin.h"
+#include "senc.h"
+#include "systimer.h"
+//#include "button.h"
+#include "filter.h"
+
 
 
 Tact frq;
+Hd44780 lcd;
+Buffer val;
+Pit pit1 (Pit::channel::ch1, 1000, Pit::mode::ms);
+Pin pin1 (Gpio::Port::H, 0, Gpio::out::PushPull);
+Pin button (Gpio::Port::I, 4, Gpio::PP::PullDown);
+Senc encoder (Gpio::Port::B, 4, Gpio::Port::B, 5, 1000);
+//Button butt (Gpio::Port::I, 4);
+Filter filters;
+
 
 extern "C" {
 	void SysTick_Handler();
 	void PIT_CH1_IRQHandler();
+	void IRQ_IRQHandler();
 }
-/*
-void PIT_CH1_IRQHandler()
-{
-	static bool flag;
-	Stimer.clear_flag();
-	if (flag)
-	{
-		display.Shift(Hd44780::Window, Hd44780::Left, 16);
-		flag = 0;
-	}
-	else
-	{
-		display.command(clear_counter);
-		flag = 1;
-	}
-}*/
-
 
 
 uint8_t new_char0[8]
@@ -42,16 +41,87 @@ uint8_t new_char0[8]
 0x1F,
 };
 
+void action ();
+
+void SysTick_Handler()
+{
+	pin1.togle();
+}
+
+void PIT_CH1_IRQHandler()
+{
+	pit1.clear_flag();
+	/*if (!button.state())
+	encoder.scan();*/
+
+}
+
+
+void initIrq ();
+
+void IRQ_IRQHandler()
+{
+	IRQ->SC |= IRQ_SC_IRQACK_MASK;
+	pin1.set();
+}
+
 int main()
 {
-	Hd44780 lcd;
-	lcd.send_string("Hello!!!");
+
+	lcd.sendString("Hello!!!");
+	lcd.setPosition(1, 0);
+	val.setFont (Array_char);
+
+	encoder.setValue(50);
+
+
+	filters.setFltDiv2 (Filter::busclkDivision::div4096);
+	filters.setFltDiv3(Filter::lpoclkDivision::div32);
+	//set 5.8kHz for encoder
+	//filters.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
+	//set 62.5hz==16ms for button and tilt sensor
+	//filters.setFilter(Filter::sourceFilter::PTI_, Filter::clkFilter::lpoclk);
+	PORT->IOFLT1 |= 0x03;
+	//filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
+	//initIrq ();
+
+	pit1.interrupt_enable();
+	pit1.start();
+/*
+	//SysTick_BASE
+
+	 SysTick->LOAD=0xFFFFFF;		// Загрузка значения
+	 SysTick->VAL=48000;		// Обнуляем таймеры и флаги. Записью, помните?
+
+	 SysTick->CTRL=	SysTick_CTRL_CLKSOURCE_Msk |
+	                SysTick_CTRL_TICKINT_Msk   |
+	                SysTick_CTRL_ENABLE_Msk;*/
+	 Systimer (Systimer::mode::us, 250);
 
 
 	while (1)
 	{
-		delay_ms(1000);
+		//encoder.scan();
+		lcd.setPosition(1, 0);
+		val.parsDec16(encoder.getValue());
+		lcd.sendString(val.getContent());
+		delay_ms(1);
 	}
+}
+
+void action ()
+{
+	pin1.togle();
+}
+
+
+void initIrq ()
+{
+	Pin irqPin (Gpio::Port::I, 4, Gpio::PP::PullUp);
+	SIM->SCGC |= SIM_SCGC_IRQ_MASK;
+	IRQ->SC &= ~(IRQ_SC_IRQEDG_MASK|IRQ_SC_IRQMOD_MASK|IRQ_SC_IRQPDD_MASK) ;
+	IRQ->SC |= IRQ_SC_IRQPE_MASK| IRQ_SC_IRQIE_MASK;
+	NVIC_EnableIRQ(IRQ_IRQn);
 }
 
 void initAdc (uint8_t n)
@@ -71,10 +141,10 @@ uint16_t getAdc (uint8_t n)
 	while (!ADC->SC1&ADC_SC1_COCO_MASK);
 	return ADC->R;
 }
-
+/*
 void initIrq ()
 {
-	SIM->SCGC |= SIM_SCGC_IRQ_MASK;
+
 
 	PORT->IOFLT0 &=~ PORT_IOFLT0_FLTDIV2_MASK;
 	PORT->IOFLT0 |=PORT_IOFLT0_FLTDIV2(2);
@@ -84,7 +154,7 @@ void initIrq ()
 	//falling edge
 	IRQ->SC &= ~ (IRQ_SC_IRQEDG_MASK | IRQ_SC_IRQMOD_MASK);
 	IRQ->SC |= IRQ_SC_IRQPDD_MASK | IRQ_SC_IRQPE_MASK;
-}
+}*/
 
 void initFilter (Gpio &pin, uint8_t pin_)
 {

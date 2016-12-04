@@ -15,8 +15,9 @@
 #include "filter.h"
 
 extern "C" {
-	void SysTick_IRQHandler();
+	void SysTick_Handler();
 	void ADC_IRQHandler();
+	void PIT_CH1_IRQHandler();
 }
 
 //pid value
@@ -61,19 +62,20 @@ const char celsiusChar[8] =
 Tact frq;
 Hd44780 lcd;
 
-Button buttonEncoder (Gpio::Port::A, buttEncPin);
-Button tilt (Gpio::Port::A, tiltPin);
+
+//Button buttonEncoder (Gpio::Port::A, buttEncPin);
+//Button tilt (Gpio::Port::A, tiltPin);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
-Senc encoder (Gpio::Port::B, encAPin, Gpio::Port::B, encBPin, 100);
-Pit adcTrigger (Pit::channel::ch1, 100, Pit::mode::ms);
-Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::trigger::pit1);
+//Senc encoder (Gpio::Port::B, encAPin, Gpio::Port::B, encBPin, 100);
+Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
+Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div32, 150);
 Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div128, 37500);
-Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Filter filters;
+//Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+//Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+//Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+//Filter filters;
 
 
 typedef void (*PtrF)();
@@ -145,45 +147,17 @@ void initPosition ();
 void initDataPosition ();
 void clearCursors ();
 
-void SysTick_IRQHandler()
+void PIT_CH1_IRQHandler()
 {
-    buttonEncoder.scanButton ();
-    buttonEncoder.scanAction();
-    
-  //опрос энкодера при длительном нажатии кнопки
-  if (flag.encLongPress)encoder.scan ();
-  if (flag.encLongPress)
-  {
-	  clearCursors ();
-      lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
-      lcd.data (cursor);
-      ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
-  }
-}
-
-void ADC_IRQHandler()
-{
-	uint16_t tempAdc = 0;
-    for (uint8_t i=0;i<8;++i)
-    {
-      tempAdc += ADC->R;
-    }
-
-    currTemp.value = tempAdc >> 3;
-
-	//update PID
-	regulator.setP (pVal.value);
-	regulator.setI (iVal.value);
-	regulator.setD (dVal.value);
-
-	//calculate PID
-	pidVal.value = regulator.compute (currTemp.value);
-	heater.setValue(pidVal.value);
-
-	//update fan speed
-	fan.setValue(speed.value);
-
+	updateLcd.clear_flag();
 	//update screen
+
+	for (uint8_t i;i<7;++i)
+	{
+		ADC->SC1 = 10;
+	}
+	ADC->SC1 = ADC_SC1_AIEN_MASK|10;
+
 	screenF [flag.screens]();
 
 	//draw value
@@ -203,22 +177,65 @@ void ADC_IRQHandler()
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
+
+}
+
+
+void SysTick_Handler()
+{
+   /* buttonEncoder.scanButton ();
+    buttonEncoder.scanAction();
+    
+  //опрос энкодера при длительном нажатии кнопки
+  if (flag.encLongPress)encoder.scan ();
+  if (flag.encLongPress)
+  {
+	  clearCursors ();
+      lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
+      lcd.data (cursor);
+      ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+  }*/
+}
+
+void ADC_IRQHandler()
+{
+uint16_t tempAdc = 0;
+    for (uint8_t i=0;i<8;++i)
+    {
+      tempAdc += ADC->R;
+    }
+
+	  currTemp.value = tempAdc >> 2;
+
+  /*//update PID
+	regulator.setP (pVal.value);
+	regulator.setI (iVal.value);
+	regulator.setD (dVal.value);
+
+	//calculate PID
+	pidVal.value = regulator.compute (currTemp.value);
+	heater.setValue(pidVal.value);
+
+	//update fan speed
+	fan.setValue(speed.value);
+*/
+
 }
 
 int main()
 {
   mainScreen ();
   pidScreen ();
-  buttonEncoder.setLongLimit (100);
+  /*buttonEncoder.setLongLimit (100);
   buttonEncoder.setShortLimit (3); 
   
   buttonEncoder.setlongPressAction (changeLpFlag);
-  buttonEncoder.setshortPressAction (changeSpFlag);
+  buttonEncoder.setshortPressAction (changeSpFlag);*/
   value.setFont (Array_char);
   //init pwm
   initPosition ();
   initDataPosition ();
-
+/*
   filters.setFltDiv2 (Filter::busclkDivision::div4096);
   filters.setFltDiv3(Filter::lpoclkDivision::div16);
   //set 5.8kHz for encoder
@@ -226,8 +243,12 @@ int main()
   //set 62.5hz==16ms for button and tilt sensor
   filters.setFilter(Filter::sourceFilter::PTA, Filter::clkFilter::lpoclk);
   filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
-
-  adcTrigger.start();
+*/
+  Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
+  ADC->SC4 |= 8;
+  updateLcd.interrupt_enable();
+  updateLcd.start();
+  //adcTrigger.start();
   Systimer mainLoop (Systimer::mode::ms, 1);
   
   while (1)
@@ -343,7 +364,7 @@ void changeLpFlag ()
   {
     flag.encLongPress = 1;
     flag.encShortPress = 0;
-    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value); 
+    //encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
     lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
     lcd.data (cursor);
    
@@ -356,17 +377,17 @@ void changeSpFlag ()
 	
   else if (flag.encLongPress&&flag.screens)//screenPid
   {
-    ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue (); 
+    //ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
     flag.encShortPress++;
     if (flag.encShortPress>2) flag.encShortPress = 0;
-    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+    //encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
   }
   else if (flag.encLongPress&&!flag.screens) //mainScreen
   {
-    ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();   
+    //ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
     if (flag.encShortPress) flag.encShortPress = 0;
     else flag.encShortPress = 1;
-    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+    //encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
   }
 }
 	

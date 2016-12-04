@@ -5,10 +5,11 @@
 
 
 
+
 Tact frq;
 
 
-const uint8_t ledPin = 7;
+const uint8_t ledPin = 3;
 
 
 

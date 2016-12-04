@@ -15,16 +15,16 @@ namespace hd44780Def
   const uint8_t dataPins = 0xFF;
   //D7
   const Gpio::Port d7port = Gpio::Port::D;
-  const uint8_t d7pin = 1 << 7;
+  const uint8_t d7pin = 7;
   //E
-  const Gpio::Port eport = Gpio::Port::D;
-  const uint8_t epin = 4;
+  const Gpio::Port eport = Gpio::Port::E;
+  const uint8_t epin = 1;
   //RS
-  const Gpio::Port rsport = Gpio::Port::D;
-  const uint8_t rspin = 6;
+  const Gpio::Port rsport = Gpio::Port::C;
+  const uint8_t rspin = 5;
   //RW
-  const Gpio::Port rwport = Gpio::Port::D;
-  const uint8_t rwpin = 5;
+  const Gpio::Port rwport = Gpio::Port::E;
+  const uint8_t rwpin = 0;
 }
 
 //COMMANDS
@@ -53,6 +53,8 @@ const uint8_t second_col = 0x40;
 
 const uint8_t set_cgram_addr = 0x40;
 
+const uint8_t shiftWindowsLeft = 0x18;
+
 //Bus defenition
 const uint8_t busPin = 0x0F;
 
@@ -60,8 +62,8 @@ class Hd44780
 {
 //variables
 public:
-	enum Direction {Left = 0, Right= 0x04};
-	enum Shifter {Cursor=0, Window=0x08};
+	enum Direction{Left = 0, Right= 0x04};
+	enum Shifter  {Cursor=0, Window=0x08};
 	
 protected:
 private:

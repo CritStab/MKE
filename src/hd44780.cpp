@@ -14,21 +14,24 @@ Hd44780::Hd44780()
 
 void Hd44780::init ()
 {
+	rs.clear();	//запись комманд
+	rw.clear();	//запись в ЖКИ
 	//8bit
 	delay_ms (16);
-	tetra (0x30);
+	tetra (0x08);
 	delay_ms (5);
-	tetra (0x30);
+	tetra (0x38);
 	delay_us (110);
-	tetra (0x30);
+	tetra (0x38);
 	delay_ms (1);
 	tetra (0x38);
+	delay_ms (1);
+	clear();
 	delay_ms (1);
 	tetra (0x0C);
 	delay_ms (1);
 	tetra (0x06);
 	delay_ms (1);
-	clear();
 }
 
 void Hd44780::tetra (uint8_t t)
@@ -49,7 +52,6 @@ void Hd44780::command (uint8_t b)
 
 void Hd44780::initCommand (uint8_t com)
 {
-	rw.clear();
 	rs.clear();
 	tetra (com);
 	delay_us(50);
@@ -108,6 +110,7 @@ void Hd44780::checkBusy ()
 	}
 	while (state);
 	d7.setOut(Gpio::out::PushPull);
+	rw.clear();
 }
 
 void Hd44780::Shift(Shifter s, Direction d, uint8_t val)
@@ -119,28 +122,19 @@ void Hd44780::Shift(Shifter s, Direction d, uint8_t val)
 		command(shift_);
 	}
 	command(turn_on_display);
-	if (d == Left)
-	{
-		uint8_t temp = 40 - position;
-		if (s > (temp))position = s - temp;
-		else position += s;
-	}
-	else
-	{
-
-		if (s > position)
-		{
-			uint8_t temp = s - position;
-			position = 40 - temp;
-		}
-		else position -= s;
-	}
-
+	position = val;
 }
+
 void Hd44780::setShiftPosition (uint8_t pos)
 {
+	//command(turn_off_display);
 	command (clear_counter);
-	for (uint8_t i=0; i< pos;++i)command (shift|Left|Window);
+	delay_ms(2);
+	for (uint8_t i=0;i<pos;++i)
+	{
+		command (shiftWindowsLeft);
+	}
+	//command(turn_on_display);
 	position = pos;
 }
 
