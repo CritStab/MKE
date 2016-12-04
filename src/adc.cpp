@@ -49,6 +49,7 @@ Adc::Adc(channel ch_, resolution r_, buffer b, divider d)
 :pin_ (portDef [(uint8_t)ch_])
 {
 	n_channel = static_cast<uint8_t> (ch_);
+	deptBuffer = static_cast<uint8_t> (b);
 	//tact ADC0
 	SIM->SCGC |= SIM_SCGC_ADC_MASK;
 
@@ -75,8 +76,8 @@ Adc::Adc(channel ch_, resolution r_, buffer b, divider d)
 	//one conversion
 	ADC->SC1 &= ~ADC_SC1_ADCO_MASK;
 
-	ADC->SC4 = ADC_SC4_ASCANE_MASK;
-	ADC->SC4 |= ADC_SC4_AFDEP(b);
+	//ADC->SC4 = ADC_SC4_ASCANE_MASK;
+	ADC->SC4 = ADC_SC4_AFDEP(deptBuffer);
 }
 
 Adc::Adc(channel ch_, resolution r_, trigger t, divider d )
@@ -115,9 +116,6 @@ Adc::Adc(channel ch_, resolution r_, trigger t, divider d )
 
 uint16_t Adc::getData ()
 {
-	//Select channal and start conversation
-	ADC->SC1 = ADC_SC1_ADCH(n_channel);
-	while (!(ADC->SC1&ADC_SC1_COCO_MASK));
 	return ADC->R;
 }
 
@@ -131,10 +129,26 @@ bool Adc::getCoco ()
 	while (!(ADC->SC1&ADC_SC1_COCO_MASK));
 }
 
+void Adc::convertBuffer()
+{
+	for (uint8_t i=0;i<deptBuffer;++i) ADC->SC1 = n_channel;
+	ADC->SC1 = sc1Mask;
+}
+
 void Adc::interrupt (bool state)
 {
-	if (state) n_channel |= ADC_SC1_AIEN_MASK;
-	else n_channel &= ~ ADC_SC1_AIEN_MASK;
+	if (state)
+	{
+		sc1Mask = n_channel | ADC_SC1_AIEN_MASK;
+		NVIC_EnableIRQ(ADC_IRQn);
+
+	}
+	else
+	{
+		sc1Mask = n_channel;
+		NVIC_DisableIRQ(ADC_IRQn);
+	}
+
 }
 
 

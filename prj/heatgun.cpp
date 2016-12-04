@@ -152,11 +152,7 @@ void PIT_CH1_IRQHandler()
 	updateLcd.clear_flag();
 	//update screen
 
-	for (uint8_t i;i<7;++i)
-	{
-		ADC->SC1 = 10;
-	}
-	ADC->SC1 = ADC_SC1_AIEN_MASK|10;
+	sensor.convertBuffer();
 
 	screenF [flag.screens]();
 
@@ -202,10 +198,10 @@ void ADC_IRQHandler()
 uint16_t tempAdc = 0;
     for (uint8_t i=0;i<8;++i)
     {
-      tempAdc += ADC->R;
+      tempAdc += (sensor.getData() >> 2);
     }
 
-	  currTemp.value = tempAdc >> 2;
+	  currTemp.value = tempAdc >> 3;
 
   /*//update PID
 	regulator.setP (pVal.value);
@@ -244,8 +240,9 @@ int main()
   filters.setFilter(Filter::sourceFilter::PTA, Filter::clkFilter::lpoclk);
   filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
 */
-  Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
-  ADC->SC4 |= 8;
+
+  sensor.interrupt(true);
+
   updateLcd.interrupt_enable();
   updateLcd.start();
   //adcTrigger.start();

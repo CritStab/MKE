@@ -13,14 +13,15 @@ public:
 	enum class trigger : uint8_t {rtcOvf, ftm0, ftm2Init, ftm2Match, pit0, pit1, cmp0, cmp1};
 	enum class divider : uint8_t {div1, div2, div4, div8};
 	enum class clockSource : uint8_t {busClock, busClock2, altclk, adack};
-	enum class buffer : uint8_t {buffer1=1, buffer2, buffer3, buffer4, buffer5, buffer6, buffer7, buffer8};
+	enum class buffer : uint8_t {buffer2=1, buffer3, buffer4, buffer5, buffer6, buffer7, buffer8};
 
 private:
 	//static const uint8_t pinDef [10];
 	static const Gpio::Port portDef [10];
 	Gpio pin_;
 	uint8_t n_channel;
-	//uint8_t sc1Mask;
+	uint8_t sc1Mask;
+	uint8_t deptBuffer;
 
 public:
 	//constructor with soft trigger
@@ -31,6 +32,7 @@ public:
 	Adc(channel ch_, resolution r_, trigger t, divider d = divider::div4);
 	uint16_t getData ();
 	void convert ();
+	void convertBuffer();
 	bool getCoco ();
 	void interrupt (bool);
 
