@@ -74,7 +74,7 @@ Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div32, 150);
 Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div128, 37500);
 //Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-//Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 //Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Filter filters;
 
@@ -220,10 +220,12 @@ uint16_t tempAdc = 0;
 
 	//calculate PID
 	pidVal.value = regulator.compute (currTemp.value);
+	fan.setValue(speed.value);
+
 	/*heater.setValue(pidVal.value);
 
 	//update fan speed
-	fan.setValue(speed.value);
+
 */
 
 }
@@ -257,7 +259,7 @@ int main()
 */
 
   sensor.interrupt(true);
-
+  ftm2.start();
   updateLcd.interrupt_enable();
   updateLcd.start();
   //adcTrigger.start();
