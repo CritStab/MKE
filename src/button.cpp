@@ -1,7 +1,7 @@
 #include "button.h"
 
 Button::Button (Gpio::Port p_, uint8_t pi)
-:pin_ (p_, pi, Gpio::PP::PullUp)
+:pin_ (p_, pi, Gpio::PP::PullDown)
 {
   shortPress = longPress = lastState = currentState = false;
   counter = 0;

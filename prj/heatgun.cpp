@@ -236,8 +236,8 @@ int main()
 {
   mainScreen ();
   pidScreen ();
-  buttonEncoder.setLongLimit (100);
-  buttonEncoder.setShortLimit (3); 
+  buttonEncoder.setLongLimit (1000);
+  buttonEncoder.setShortLimit (10);
   
   buttonEncoder.setlongPressAction (changeLpFlag);
   buttonEncoder.setshortPressAction (changeSpFlag);
@@ -261,6 +261,7 @@ int main()
   updateLcd.interrupt_enable();
   updateLcd.start();
   //adcTrigger.start();
+
   Systimer mainLoop (Systimer::mode::ms, 1);
   
   while (1)
@@ -282,7 +283,11 @@ void initIrq ()
 
 void initPwm ()
 {
+	//maped ftm1 ch1 at E7
+	SIM->PINSEL |= SIM_PINSEL_FTM1PS1_MASK;
 
+	//maped ftm2 ch1 at c1, ch0 at c0
+	SIM->PINSEL1 &= ~(SIM_PINSEL1_FTM2PS0_MASK|SIM_PINSEL1_FTM2PS1_MASK);
 }
 
 void initPosition ()
@@ -375,7 +380,7 @@ void getPidScreen ()
 {
   if (!flag.shift)
   {
-    lcd.Shift (Hd44780::Window, Hd44780::Left, 16);
+    lcd.setShiftPosition(16);
     flag.shift = 1;
   }
 }
