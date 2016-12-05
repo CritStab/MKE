@@ -18,6 +18,7 @@ extern "C" {
 	void SysTick_Handler();
 	void ADC_IRQHandler();
 	void PIT_CH1_IRQHandler();
+	void IRQ_IRQHandler();
 }
 
 //pid value
@@ -63,7 +64,7 @@ Tact frq;
 Hd44780 lcd;
 
 
-//Button buttonEncoder (Gpio::Port::A, buttEncPin);
+Button buttonEncoder (Gpio::Port::A, buttEncPin);
 //Button tilt (Gpio::Port::A, tiltPin);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
@@ -75,7 +76,7 @@ Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div128, 37500);
 //Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 //Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 //Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-//Filter filters;
+Filter filters;
 
 
 typedef void (*PtrF)();
@@ -153,10 +154,11 @@ void PIT_CH1_IRQHandler()
 	//update screen
 
 	sensor.convertBuffer();
-
+	 buttonEncoder.scanAction();
 	screenF [flag.screens]();
 
-	//draw value
+	//===draw value===//
+	//draw main screen
 	data **tempPtr = &ScreenVal[0][0];
 	for (uint8_t i=0;i<3;++i)
 	{
@@ -165,6 +167,7 @@ void PIT_CH1_IRQHandler()
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
+	//draw pid screen
 	tempPtr = &ScreenVal[1][0];
 	for (uint8_t i=0;i<3;++i)
 	{
@@ -173,16 +176,18 @@ void PIT_CH1_IRQHandler()
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
-
+	//draw pid Value
+	lcd.setPosition(pidVal.pos.row, pidVal.pos.coloumn);
+	value.parsDec16 (pidVal.value);
+	lcd.sendString (value.getContent());
 }
 
 
 void SysTick_Handler()
 {
-   /* buttonEncoder.scanButton ();
-    buttonEncoder.scanAction();
+    buttonEncoder.scanButton ();
     
-  //опрос энкодера при длительном нажатии кнопки
+ /* //опрос энкодера при длительном нажатии кнопки
   if (flag.encLongPress)encoder.scan ();
   if (flag.encLongPress)
   {
@@ -191,6 +196,11 @@ void SysTick_Handler()
       lcd.data (cursor);
       ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
   }*/
+}
+
+void IRQ_IRQHandler()
+{
+	IRQ->SC |= IRQ_SC_IRQACK_MASK;
 }
 
 void ADC_IRQHandler()
@@ -203,14 +213,14 @@ uint16_t tempAdc = 0;
 
 	  currTemp.value = tempAdc >> 3;
 
-  /*//update PID
+//update PID
 	regulator.setP (pVal.value);
 	regulator.setI (iVal.value);
 	regulator.setD (dVal.value);
 
 	//calculate PID
 	pidVal.value = regulator.compute (currTemp.value);
-	heater.setValue(pidVal.value);
+	/*heater.setValue(pidVal.value);
 
 	//update fan speed
 	fan.setValue(speed.value);
@@ -218,24 +228,29 @@ uint16_t tempAdc = 0;
 
 }
 
+void initIrq ();
+void initPwm ();
+
+
 int main()
 {
   mainScreen ();
   pidScreen ();
-  /*buttonEncoder.setLongLimit (100);
+  buttonEncoder.setLongLimit (100);
   buttonEncoder.setShortLimit (3); 
   
   buttonEncoder.setlongPressAction (changeLpFlag);
-  buttonEncoder.setshortPressAction (changeSpFlag);*/
+  buttonEncoder.setshortPressAction (changeSpFlag);
   value.setFont (Array_char);
   //init pwm
   initPosition ();
   initDataPosition ();
-/*
+
   filters.setFltDiv2 (Filter::busclkDivision::div4096);
-  filters.setFltDiv3(Filter::lpoclkDivision::div16);
-  //set 5.8kHz for encoder
   filters.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
+ /* filters.setFltDiv3(Filter::lpoclkDivision::div16);
+  //set 5.8kHz for encoder
+
   //set 62.5hz==16ms for button and tilt sensor
   filters.setFilter(Filter::sourceFilter::PTA, Filter::clkFilter::lpoclk);
   filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
@@ -252,6 +267,22 @@ int main()
   {
     
   }
+}
+
+void initIrq ()
+{
+	Pin irqPin (Gpio::Port::I, 4, Gpio::PP::PullUp);
+	SIM->SCGC |= SIM_SCGC_IRQ_MASK;
+	SIM->PINSEL &= ~ SIM_PINSEL_IRQPS_MASK;
+	SIM->PINSEL |= SIM_PINSEL_IRQPS(0x05);
+	IRQ->SC &= ~(IRQ_SC_IRQEDG_MASK|IRQ_SC_IRQMOD_MASK) ;
+	IRQ->SC |= IRQ_SC_IRQPE_MASK| IRQ_SC_IRQIE_MASK|IRQ_SC_IRQPDD_MASK;
+	NVIC_EnableIRQ(IRQ_IRQn);
+}
+
+void initPwm ()
+{
+
 }
 
 void initPosition ()
