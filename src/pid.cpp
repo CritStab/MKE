@@ -64,7 +64,7 @@ uint16_t Pid::compute (uint16_t processValue)
   lastProcessValue = processValue;
 
   ret = (p_term + i_term + d_term) / 10;
-  if(ret > MAX_UINT) ret = MAX_UINT;
+  if(ret > pidLimit) ret = pidLimit;
   else if(ret < 0)ret = 0;
     
   return (uint16_t) ret;
@@ -81,6 +81,11 @@ void Pid::setI (uint16_t val)
 void Pid::setD (uint16_t val)
 {
   d = val;
+}
+
+void Pid::setPidLimit (uint16_t val)
+{
+	pidLimit = val;
 }
 
  void Pid::reset ()

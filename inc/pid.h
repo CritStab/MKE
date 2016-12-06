@@ -25,6 +25,7 @@ class Pid
   //! Maximum allowed sumerror, avoid overflow
   int32_t maxSumError;
   uint16_t setPoint;
+  uint16_t pidLimit;
 	//functions
 public:
   Pid (double P, double I, double D, uint16_t setPoint_);
@@ -36,6 +37,7 @@ public:
   void setP (uint16_t);
   void setI (uint16_t);
   void setD (uint16_t);
+  void setPidLimit (uint16_t);
   void reset ();
 };
 

@@ -18,7 +18,6 @@ extern "C" {
 	void SysTick_Handler();
 	void ADC_IRQHandler();
 	void PIT_CH1_IRQHandler();
-	void IRQ_IRQHandler();
 }
 
 //pid value
@@ -73,20 +72,13 @@ Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
 Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
 Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 150);
-//Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm heater (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm fan (ftm2, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-//Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm beeper (ftm2, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Filter filters;
 
 
 typedef void (*PtrF)();
-
-struct period_
-{
-  uint8_t lcd;
-  uint8_t adc;
-  uint8_t pid;
-}period = {10, 40, 100};
 
 struct flags
 {
@@ -95,6 +87,7 @@ struct flags
   unsigned encReady : 1;
   unsigned screens :1;
   unsigned shift :2;
+  unsigned beeper : 2;
 }flag;
 
 struct position
@@ -106,6 +99,8 @@ struct position
 struct data
 {
   uint16_t value;
+  uint16_t lowLimit;
+  uint16_t highLimit;
   position pos;	
 }speed, currTemp, setTemp, pVal, iVal, dVal, pidVal;
 
@@ -161,6 +156,7 @@ void PIT_CH1_IRQHandler()
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
+
 	//draw pid screen
 	tempPtr = &ScreenVal[1][0];
 	for (uint8_t i=0;i<3;++i)
@@ -170,13 +166,22 @@ void PIT_CH1_IRQHandler()
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
+
 	//draw pid Value
 	lcd.setPosition(pidVal.pos.row, pidVal.pos.coloumn);
 	value.parsDec16 (pidVal.value);
 	lcd.sendString (value.getContent());
 
-	//
+	//update value
 	if (flag.encLongPress) ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+
+	//add beeper
+	if (!flag.beeper) beeper.setValue(0);
+	else
+	{
+		beeper.setValue(50);
+		flag.beeper = 0;
+	}
 }
 
 
@@ -184,15 +189,6 @@ void SysTick_Handler()
 {
     buttonEncoder.scanButton ();
     if (flag.encLongPress)encoder.scan ();
- /* //опрос энкодера при длительном нажатии кнопки
-
-  if (flag.encLongPress)
-  {
-	  clearCursors ();
-      lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
-      lcd.data (cursor);
-      ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
-  }*/
 }
 
 void IRQ_IRQHandler()
@@ -208,9 +204,9 @@ uint16_t tempAdc = 0;
       tempAdc += (sensor.getData() >> 2);
     }
 
-	  currTemp.value = tempAdc >> 4;
+	currTemp.value = tempAdc >> 4;
 
-//update PID
+	//update PID
 	regulator.setP (pVal.value);
 	regulator.setI (iVal.value);
 	regulator.setD (dVal.value);
@@ -219,11 +215,8 @@ uint16_t tempAdc = 0;
 	pidVal.value = regulator.compute (currTemp.value);
 	fan.setValue(speed.value);
 
-	/*heater.setValue(pidVal.value);
-
-	//update fan speed
-
-*/
+	//update heater value
+	heater.setValue(pidVal.value);
 
 }
 
@@ -241,22 +234,20 @@ int main()
   buttonEncoder.setlongPressAction (changeLpFlag);
   buttonEncoder.setshortPressAction (changeSpFlag);
   value.setFont (Array_char);
-  //init pwm
+
   initPosition ();
   initDataPosition ();
 
-  filters.setFltDiv2 (Filter::busclkDivision::div4096);
-  filters.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
- /* filters.setFltDiv3(Filter::lpoclkDivision::div16);
-  //set 5.8kHz for encoder
-
-  //set 62.5hz==16ms for button and tilt sensor
-  filters.setFilter(Filter::sourceFilter::PTA, Filter::clkFilter::lpoclk);
-  filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
-*/
-
+  //interrupt ADC switch on
   sensor.interrupt(true);
+
+  //set High value for PID regulator
+  regulator.setPidLimit(37500);
+
+  //map pwm pins
+  initPwm ();
   ftm2.start();
+  ftm1.start();
   updateLcd.interrupt_enable();
   updateLcd.start();
 
@@ -305,21 +296,31 @@ void initPosition ()
 void initDataPosition ()
 {
   speed.value = speedVal;
+  speed.highLimit = 100;
+  speed.lowLimit = 0;
   speed.pos.coloumn = 11;
   speed.pos.row = 0;
   currTemp.value = 0;
   currTemp.pos.coloumn = 3;
   currTemp.pos.row = 1;
   setTemp.value = TsetVal;
+  setTemp.highLimit = 450;
+  setTemp.lowLimit = 0;
   setTemp.pos.coloumn = 12;
   setTemp.pos.row = 1;
   pVal.value = regulator.getP();
+  pVal.highLimit = 99;
+  pVal.lowLimit = 0;
   pVal.pos.coloumn = 18;
   pVal.pos.row = 0;
   iVal.value = regulator.getI ();
+  iVal.highLimit = 99;
+  iVal.lowLimit = 0;
   iVal.pos.coloumn = 23;
   iVal.pos.row = 0;
   dVal.value = regulator.getD ();
+  dVal.highLimit = 99;
+  dVal.lowLimit = 0;
   dVal.pos.coloumn = 28;
   dVal.pos.row = 0;
   pidVal.value = 0;
@@ -393,43 +394,55 @@ void changeLpFlag ()
   if (flag.encLongPress) 
   {
     flag.encLongPress = 0;
-    //flag.encShortPress = flag.screens;
     clearCursors ();
   }
   else 
   {
     flag.encLongPress = 1;
     flag.encShortPress = 0;
+
+    //set encoder value + limits
     encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+    encoder.setHigh (ScreenVal [flag.screens][flag.encShortPress]->highLimit);
+    encoder.setLow (ScreenVal [flag.screens][flag.encShortPress]->lowLimit);
+
     lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
     lcd.data (cursor);
-   
   }
 }
 
 void changeSpFlag ()
 {
-  if (!flag.encLongPress) flag.screens ^= 1;
-	
-  else if (flag.encLongPress&&flag.screens)//screenPid
+  if (!flag.encLongPress)
   {
-    ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
-    flag.encShortPress++;
-    if (flag.encShortPress>2) flag.encShortPress = 0;
-    clearCursors ();
-    lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
-    lcd.data (cursor);
-    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+	  flag.screens ^= 1;
+	  flag.beeper = 1;
   }
-  else if (flag.encLongPress&&!flag.screens) //mainScreen
+
+	
+  else
   {
-    ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
-    if (flag.encShortPress) flag.encShortPress = 0;
-    else flag.encShortPress = 1;
-    clearCursors ();
-    lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
-    lcd.data (cursor);
-    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+	   flag.beeper = 1;
+	  ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+	  if (flag.screens)
+	  {
+		  flag.encShortPress++;
+		  if (flag.encShortPress>2) flag.encShortPress = 0;
+	  }
+	  else
+	  {
+		  if (flag.encShortPress) flag.encShortPress = 0;
+		  else flag.encShortPress = 1;
+	  }
+	  //update cursor position
+	  clearCursors ();
+	  lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
+	  lcd.data (cursor);
+
+	  //update encoder value
+	  encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+	  encoder.setHigh (ScreenVal [flag.screens][flag.encShortPress]->highLimit);
+	  encoder.setLow (ScreenVal [flag.screens][flag.encShortPress]->lowLimit);
   }
 }
 	
