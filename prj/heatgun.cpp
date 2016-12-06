@@ -30,8 +30,8 @@ const double d  = 3.0;
 const uint8_t buttEncPin = 0;
 const uint8_t tiltPin = 2;
 
-const uint8_t encAPin = 4;
-const uint8_t encBPin = 5;
+const uint8_t encAPin = 6;
+const uint8_t encBPin = 7;
 
 const uint16_t TsetVal=250;
 const uint16_t speedVal=60;
@@ -68,13 +68,13 @@ Button buttonEncoder (Gpio::Port::A, buttEncPin);
 //Button tilt (Gpio::Port::A, tiltPin);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
-//Senc encoder (Gpio::Port::B, encAPin, Gpio::Port::B, encBPin, 100);
+Senc encoder (Gpio::Port::C, encAPin, Gpio::Port::C, encBPin, 100);
 Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
 Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
-Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div32, 150);
-Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div128, 37500);
+Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
+Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 150);
 //Pwm heater (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Pwm fan (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm fan (ftm2, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 //Pwm beeper (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Filter filters;
 
@@ -87,12 +87,6 @@ struct period_
   uint8_t adc;
   uint8_t pid;
 }period = {10, 40, 100};
-
-struct encdr
-{
-  uint8_t state;
-  uint16_t count;
-}encod;
 
 struct flags
 {
@@ -154,7 +148,7 @@ void PIT_CH1_IRQHandler()
 	//update screen
 
 	sensor.convertBuffer();
-	 buttonEncoder.scanAction();
+	buttonEncoder.scanAction();
 	screenF [flag.screens]();
 
 	//===draw value===//
@@ -180,15 +174,18 @@ void PIT_CH1_IRQHandler()
 	lcd.setPosition(pidVal.pos.row, pidVal.pos.coloumn);
 	value.parsDec16 (pidVal.value);
 	lcd.sendString (value.getContent());
+
+	//
+	if (flag.encLongPress) ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
 }
 
 
 void SysTick_Handler()
 {
     buttonEncoder.scanButton ();
-    
+    if (flag.encLongPress)encoder.scan ();
  /* //опрос энкодера при длительном нажатии кнопки
-  if (flag.encLongPress)encoder.scan ();
+
   if (flag.encLongPress)
   {
 	  clearCursors ();
@@ -211,7 +208,7 @@ uint16_t tempAdc = 0;
       tempAdc += (sensor.getData() >> 2);
     }
 
-	  currTemp.value = tempAdc >> 3;
+	  currTemp.value = tempAdc >> 4;
 
 //update PID
 	regulator.setP (pVal.value);
@@ -238,8 +235,8 @@ int main()
 {
   mainScreen ();
   pidScreen ();
-  buttonEncoder.setLongLimit (1000);
-  buttonEncoder.setShortLimit (10);
+  buttonEncoder.setLongLimit (4000);
+  buttonEncoder.setShortLimit (40);
   
   buttonEncoder.setlongPressAction (changeLpFlag);
   buttonEncoder.setshortPressAction (changeSpFlag);
@@ -262,9 +259,8 @@ int main()
   ftm2.start();
   updateLcd.interrupt_enable();
   updateLcd.start();
-  //adcTrigger.start();
 
-  Systimer mainLoop (Systimer::mode::ms, 1);
+  Systimer mainLoop (Systimer::mode::us, 250);
   
   while (1)
   {
@@ -326,6 +322,9 @@ void initDataPosition ()
   dVal.value = regulator.getD ();
   dVal.pos.coloumn = 28;
   dVal.pos.row = 0;
+  pidVal.value = 0;
+  pidVal.pos.coloumn = 21;
+  pidVal.pos.row = 1;
 }
 
 void mainScreen ()
@@ -370,6 +369,8 @@ void pidScreen ()
   lcd.sendString ("D");	
   lcd.setPosition (0, 29);
   lcd.data ('.');
+  lcd.setPosition (1, 17);
+  lcd.sendString("PID");
 }
 
 void getMainScreen ()
@@ -399,7 +400,7 @@ void changeLpFlag ()
   {
     flag.encLongPress = 1;
     flag.encShortPress = 0;
-    //encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
     lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
     lcd.data (cursor);
    
@@ -412,17 +413,23 @@ void changeSpFlag ()
 	
   else if (flag.encLongPress&&flag.screens)//screenPid
   {
-    //ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+    ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
     flag.encShortPress++;
     if (flag.encShortPress>2) flag.encShortPress = 0;
-    //encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+    clearCursors ();
+    lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
+    lcd.data (cursor);
+    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
   }
   else if (flag.encLongPress&&!flag.screens) //mainScreen
   {
-    //ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+    ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
     if (flag.encShortPress) flag.encShortPress = 0;
     else flag.encShortPress = 1;
-    //encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
+    clearCursors ();
+    lcd.setPosition (ScreenCursor[flag.screens][flag.encShortPress]->row, ScreenCursor[flag.screens][flag.encShortPress]->coloumn);
+    lcd.data (cursor);
+    encoder.setValue (ScreenVal [flag.screens][flag.encShortPress]->value);
   }
 }
 	
