@@ -1,6 +1,11 @@
 #include "senc.h"
 
 
+Senc::Senc (Gpio::Port pA, uint8_t pinA, Gpio::Port pB, uint8_t pinB)
+:pha (pA, pinA, Gpio::PP::PullDown), phb (pB, pinB, Gpio::PP::PullDown)
+{
+  low = 0;
+}
 
 
 Senc::Senc (Gpio::Port pA, uint8_t pinA, Gpio::Port pB, uint8_t pinB,uint16_t range)

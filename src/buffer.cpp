@@ -61,6 +61,8 @@ void Buffer::parsDec16 (const uint16_t & val, uint8_t n)
   }
   arrVal [4] = val%10;
   arr [4] = font [arrVal [4]];
+  if (val < 10000) arr [0]= font [10];
+  if (val < 1000) arr [1]= font [10];
   if (val < 100) arr [2] = font [10];
   if (val < 10) 
   {

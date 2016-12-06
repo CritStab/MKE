@@ -21,6 +21,7 @@ private:
   uint8_t previusState;
 
 public:
+  Senc (Gpio::Port, uint8_t , Gpio::Port, uint8_t);
   Senc (Gpio::Port, uint8_t , Gpio::Port, uint8_t, uint16_t range);
   uint16_t getValue ();
   void setValue  (uint16_t);

@@ -12,7 +12,7 @@
 #include "adc.h"
 #include "ftm.h"
 #include "pwm.h"
-#include "filter.h"
+
 
 extern "C" {
 	void SysTick_Handler();
@@ -64,18 +64,18 @@ Hd44780 lcd;
 
 
 Button buttonEncoder (Gpio::Port::A, buttEncPin);
-//Button tilt (Gpio::Port::A, tiltPin);
+Pin tilt (Gpio::Port::A, tiltPin);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
-Senc encoder (Gpio::Port::C, encAPin, Gpio::Port::C, encBPin, 100);
+Senc encoder (Gpio::Port::C, encAPin, Gpio::Port::C, encBPin);
 Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
 Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
-Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 150);
-Pwm heater (ftm1, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 100);
+Pwm heater (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm fan (ftm2, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm beeper (ftm2, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Filter filters;
+
 
 
 typedef void (*PtrF)();
@@ -169,11 +169,13 @@ void PIT_CH1_IRQHandler()
 
 	//draw pid Value
 	lcd.setPosition(pidVal.pos.row, pidVal.pos.coloumn);
-	value.parsDec16 (pidVal.value);
-	lcd.sendString (value.getContent());
+	value.parsDec16 (pidVal.value, 5);
+	lcd.sendString (value.getElement(0));
 
 	//update value
 	if (flag.encLongPress) ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+
+	fan.setValue(speed.value);
 
 	//add beeper
 	if (!flag.beeper) beeper.setValue(0);
@@ -213,7 +215,8 @@ uint16_t tempAdc = 0;
 
 	//calculate PID
 	pidVal.value = regulator.compute (currTemp.value);
-	fan.setValue(speed.value);
+
+
 
 	//update heater value
 	heater.setValue(pidVal.value);
@@ -259,21 +262,15 @@ int main()
   }
 }
 
-void initIrq ()
-{
-	Pin irqPin (Gpio::Port::I, 4, Gpio::PP::PullUp);
-	SIM->SCGC |= SIM_SCGC_IRQ_MASK;
-	SIM->PINSEL &= ~ SIM_PINSEL_IRQPS_MASK;
-	SIM->PINSEL |= SIM_PINSEL_IRQPS(0x05);
-	IRQ->SC &= ~(IRQ_SC_IRQEDG_MASK|IRQ_SC_IRQMOD_MASK) ;
-	IRQ->SC |= IRQ_SC_IRQPE_MASK| IRQ_SC_IRQIE_MASK|IRQ_SC_IRQPDD_MASK;
-	NVIC_EnableIRQ(IRQ_IRQn);
-}
 
 void initPwm ()
 {
 	//maped ftm1 ch1 at E7
-	SIM->PINSEL |= SIM_PINSEL_FTM1PS1_MASK;
+	//SIM->PINSEL |= SIM_PINSEL_FTM1PS1_MASK;
+
+	//maped ftm1 ch0 at H2
+	SIM->PINSEL |= SIM_PINSEL_FTM1PS0_MASK;
+
 
 	//maped ftm2 ch1 at c1, ch0 at c0
 	SIM->PINSEL1 &= ~(SIM_PINSEL1_FTM2PS0_MASK|SIM_PINSEL1_FTM2PS1_MASK);

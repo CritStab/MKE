@@ -33,7 +33,7 @@
 uint16_t Pid::compute (uint16_t processValue)
  {
 	 int16_t error, p_term, d_term;
-	 int32_t i_term, ret, temp;
+	 int32_t i_term, temp;
 	 error = setPoint - processValue;
   // Calculate Pterm and limit error overflow
   if (error > maxError) p_term = MAX_INT;
@@ -41,7 +41,10 @@ uint16_t Pid::compute (uint16_t processValue)
   else p_term = p * error;
 
   // Calculate Iterm and limit integral runaway
-  temp = sumError + error;
+  if (ret==pidLimit||ret==0)temp = sumError;
+  else temp = sumError + error;
+
+
   if(temp > maxSumError)
 	{
     i_term = MAX_I_TERM;

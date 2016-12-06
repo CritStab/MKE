@@ -23,7 +23,7 @@ class Pid
   //! Maximum allowed error, avoid overflow
   int16_t maxError;
   //! Maximum allowed sumerror, avoid overflow
-  int32_t maxSumError;
+  int32_t maxSumError, ret;
   uint16_t setPoint;
   uint16_t pidLimit;
 	//functions
