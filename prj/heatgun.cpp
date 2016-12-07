@@ -70,7 +70,7 @@ Hd44780 lcd;
 
 
 Button buttonEncoder (Gpio::Port::A, buttEncPin);
-Pin tilt (Gpio::Port::A, tiltPin, Gpio::PP::PullDown);
+Pin tilt (Gpio::Port::A, tiltPin, Gpio::PP::PullUp);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
 Senc encoder (Gpio::Port::C, encAPin, Gpio::Port::C, encBPin);
@@ -155,9 +155,7 @@ void PIT_CH1_IRQHandler()
 	{
 		if (currTemp.value>coolingTemp) fan.setValue(coolingSpeed1);
 		else fan.setValue(coolingSpeed2);
-
 		heater.setValue(0);
-
 	}
 	else
 	{
