@@ -18,6 +18,7 @@ extern "C" {
 	void SysTick_Handler();
 	void ADC_IRQHandler();
 	void PIT_CH1_IRQHandler();
+	void FTM0_IRQHandler ();
 }
 
 //pid value
@@ -34,6 +35,11 @@ const uint8_t encBPin = 7;
 
 const uint16_t TsetVal=250;
 const uint16_t speedVal=60;
+
+const uint8_t coolingTemp = 50;
+const uint8_t coolingSpeed1 = 100;
+const uint8_t coolingSpeed2 = 40;
+
 
 const char cursorChar[8] =
 { 
@@ -64,7 +70,7 @@ Hd44780 lcd;
 
 
 Button buttonEncoder (Gpio::Port::A, buttEncPin);
-Pin tilt (Gpio::Port::A, tiltPin);
+Pin tilt (Gpio::Port::A, tiltPin, Gpio::PP::PullDown);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
 Senc encoder (Gpio::Port::C, encAPin, Gpio::Port::C, encBPin);
@@ -88,6 +94,7 @@ struct flags
   unsigned screens :1;
   unsigned shift :2;
   unsigned beeper : 2;
+  unsigned tilt : 1;
 }flag;
 
 struct position
@@ -137,13 +144,44 @@ void initPosition ();
 void initDataPosition ();
 void clearCursors ();
 
+
+
+
 void PIT_CH1_IRQHandler()
 {
 	updateLcd.clear_flag();
 	//update screen
+	if (!tilt.state())
+	{
+		if (currTemp.value>coolingTemp) fan.setValue(coolingSpeed1);
+		else fan.setValue(coolingSpeed2);
 
-	sensor.convertBuffer();
+		heater.setValue(0);
+
+	}
+	else
+	{
+		//update fan speed
+		fan.setValue(speed.value);
+	}
+
 	buttonEncoder.scanAction();
+	//update value
+	if (flag.encLongPress) ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
+
+	//add beeper
+	if (!flag.beeper) beeper.setValue(0);
+	else
+	{
+		beeper.setValue(50);
+		flag.beeper = 0;
+	}
+
+		//convert adc
+	sensor.convertBuffer();
+
+
+	//set shift screen
 	screenF [flag.screens]();
 
 	//===draw value===//
@@ -172,18 +210,6 @@ void PIT_CH1_IRQHandler()
 	value.parsDec16 (pidVal.value, 5);
 	lcd.sendString (value.getElement(0));
 
-	//update value
-	if (flag.encLongPress) ScreenVal [flag.screens][flag.encShortPress]->value = encoder.getValue ();
-
-	fan.setValue(speed.value);
-
-	//add beeper
-	if (!flag.beeper) beeper.setValue(0);
-	else
-	{
-		beeper.setValue(50);
-		flag.beeper = 0;
-	}
 }
 
 
@@ -213,14 +239,14 @@ uint16_t tempAdc = 0;
 	regulator.setI (iVal.value);
 	regulator.setD (dVal.value);
 
-	//calculate PID
-	pidVal.value = regulator.compute (currTemp.value);
 
-
-
-	//update heater value
-	heater.setValue(pidVal.value);
-
+	if (tilt.state())
+	{
+		//calculate PID
+		pidVal.value = regulator.compute (currTemp.value);
+		//update heater value
+		heater.setValue(pidVal.value);
+	}
 }
 
 void initIrq ();
@@ -251,6 +277,7 @@ int main()
   initPwm ();
   ftm2.start();
   ftm1.start();
+
   updateLcd.interrupt_enable();
   updateLcd.start();
 
@@ -461,3 +488,4 @@ void clearCursors ()
         *tPtr++;
       }  
 }
+
