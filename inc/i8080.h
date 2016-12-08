@@ -8,26 +8,26 @@
 namespace i8080def
 {
 	//Data bus 0-7
-	const Gpio::Port lowDataPort = Gpio::Port::D;
+	const Gpio::Port lowDataPort = Gpio::Port::G;
 	const uint8_t lowDataPins = 0xFF;
 	//Data bus 8-15
-	const Gpio::Port highDataPort = Gpio::Port::D;
+	const Gpio::Port highDataPort = Gpio::Port::F;
 	const uint8_t highDataPins = 0xFF;
 	//CS
-	const Gpio::Port csPort = Gpio::Port::E;
-	const uint8_t csPin = 1;
+	const Gpio::Port csPort = Gpio::Port::D;
+	const uint8_t csPin = 3;
 	//RS
-	const Gpio::Port rsPort = Gpio::Port::C;
-	const uint8_t rsPin = 5;
+	const Gpio::Port rsPort = Gpio::Port::D;
+	const uint8_t rsPin = 0;
 	//WR
-	const Gpio::Port wrPort = Gpio::Port::E;
-	const uint8_t wrPin = 0;
+	const Gpio::Port wrPort = Gpio::Port::D;
+	const uint8_t wrPin = 1;
 	//RD
-	const Gpio::Port rdPort = Gpio::Port::E;
-	const uint8_t rdPin = 0;
+	const Gpio::Port rdPort = Gpio::Port::D;
+	const uint8_t rdPin = 2;
 	//RST
-	const Gpio::Port rstPort = Gpio::Port::E;
-	const uint8_t rstPin = 0;
+	const Gpio::Port rstPort = Gpio::Port::D;
+	const uint8_t rstPin = 4;
 }
 
 

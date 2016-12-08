@@ -2,7 +2,7 @@
 #include "tact.h"
 #include "delay.h"
 #include "ssd1289.h"
-
+#include "shape.h"
 
 
 Tact frq;
@@ -32,8 +32,8 @@ int main()
 	lat.font = ArialBlack_8_data;
 	display.fillScreen(ssd1289Color::GREEN);
 	//display.drawArr(50,50,ssd1289Color::BLUE, ssd1289Color::RED, ArialBlack_8_data,2);
-	display.symbol(100,100, ssd1289Color::BLUE, ssd1289Color::RED, 1, lat);
-	display.horLine(10, 100, ssd1289Color::YELLOW, 200, 5);
+	//display.symbol(100,100, ssd1289Color::BLUE, ssd1289Color::RED, 1, lat);
+	//display.horLine(10, 100, ssd1289Color::YELLOW, 200, 5);
 	//mainScreen(display);
 	while (1)
 	{

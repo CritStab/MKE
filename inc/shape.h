@@ -7,12 +7,11 @@
 
 class Shape
 {
-public:
-
-private:
 
 public:
 	Shape ();
+	virtual void draw () const = 0;
+	virtual ~Shape();
 };
 
 #endif
