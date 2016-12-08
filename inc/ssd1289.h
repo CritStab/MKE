@@ -16,7 +16,7 @@ namespace ssd1289Color
 	const uint16_t MAGENTA =0xF81F;
 	const uint16_t YELLOW =	0xFFE0;
 	const uint16_t WHITE =	0xFFFF;
-}
+
 const uint16_t GRAY	   =	 0xE79C;
 const uint16_t SKY     =	 0x5d1C;
 const uint16_t ORANGE  =   0xFCA0;
@@ -33,7 +33,7 @@ const uint16_t MAROON     =0x7800;
 const uint16_t PURPLE     =0x7BE0;
 const uint16_t LIGHT_GREY =0xC618;
 const uint16_t DARK_GREY  =0x7BEF;
-
+}
 
 
 
@@ -62,7 +62,11 @@ public:
 	void string (uint16_t x, uint16_t y, const uint16_t color, const uint16_t fon, const char *str, sFont &f, uint8_t interval);
 	void setCursor (uint16_t x , uint16_t y);
 	void drawArr (uint16_t x , uint16_t y, const uint16_t color, const uint16_t fon, const uint8_t *arr, uint8_t l);
+	void drawPic (uint16_t x , uint16_t y, const uint16_t *arr, uint8_t length, uint16_t width);
 	void horLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick);
+	void verLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick);
+	void line (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick);
+	void rectangle (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t width, uint8_t thick);
 protected:
 private:
 	void init();

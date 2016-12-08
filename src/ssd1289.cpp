@@ -120,6 +120,22 @@ void Ssd1289::drawArr (uint16_t x , uint16_t y, uint16_t color, uint16_t fon, co
 	cs.set();
 }
 
+void Ssd1289::drawPic (uint16_t x , uint16_t y, const uint16_t *arr, uint8_t length, uint16_t width)
+{
+	for (uint8_t i=0;i<width;++i)
+	{
+		cs.set();
+		setCursor(x, y+i);
+		index(0x0022);
+		cs.clear();
+		//data
+		rs.set();
+
+		for (uint8_t j=0;j<length;++j) putData(*arr++);
+	}
+		cs.set();
+}
+
 void Ssd1289::horLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick)
 {
 	for (uint8_t i=0;i<thick;++i)
@@ -136,3 +152,29 @@ void Ssd1289::horLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, 
 	}
 	cs.set();
 }
+
+void Ssd1289::verLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick)
+{
+	for (uint8_t i=0;i<length;++i)
+	{
+		cs.set();
+		setCursor(x, y+i);
+		index(0x0022);
+		cs.clear();
+		//data
+		rs.set();
+		low.set(color&0x0044);
+		high.set(color>>8);
+		for (uint8_t j=0;j<thick;++j) strob();
+	}
+	cs.set();
+}
+
+void Ssd1289::rectangle (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t width, uint8_t thick)
+{
+	horLine(x, y,color, length, thick);
+	horLine(x, y+width, color, length, thick);
+	verLine(x, y, color, width, thick);
+	verLine(x+length, y, color, width, thick);
+}
+
