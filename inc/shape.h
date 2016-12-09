@@ -11,16 +11,10 @@ public:
 
 	static Ssd1289 * driver;
 public:
-	Shape ();
 	virtual void draw () const = 0;
-	virtual ~Shape();
-	friend void getDriver(Shape &, Ssd1289 &);
+	virtual ~Shape(){}
 };
 
-inline void getDriver(Shape &d, Ssd1289 & dr)
-{
-	d.driver = &dr;
-}
 
 
 

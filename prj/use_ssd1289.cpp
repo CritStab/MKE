@@ -3,12 +3,17 @@
 #include "delay.h"
 #include "ssd1289.h"
 #include "shape.h"
+#include "pixel.h"
+#include "verline.h"
+#include "horline.h"
 #include "colors16bit.h"
 
 Tact frq;
 
 
 Shape * layer1[]= {};
+
+
 
 extern "C" {
 	void SysTick_Handler();
@@ -32,6 +37,15 @@ int main()
 	lat.shift = 0;
 	lat.font = ArialBlack_8_data;
 	display.fillScreen(colors16bit::BLUE);
+
+	Shape::driver = &display;
+	Horline line1 (0, 120, colors16bit::BLACK, 320, 1);
+	layer1[0] = &line1;
+	Verline line2 (0, 120, colors16bit::BLACK, 320, 1);
+	layer1[0] = &line1;
+	layer1[1] = &line2;
+	layer1[0]->draw();
+	layer1[1]->draw();
 	//display.drawArr(50,50,ssd1289Color::BLUE, ssd1289Color::RED, ArialBlack_8_data,2);
 	//display.symbol(100,100, ssd1289Color::BLUE, ssd1289Color::RED, 1, lat);
 	//display.horLine(10, 100, ssd1289Color::YELLOW, 200, 5);
@@ -46,9 +60,9 @@ void mainScreen (Ssd1289 & d)
 {
 	d.fillScreen(colors16bit::SILVER);
 
-	//
 	d.verLine(160, 0, colors16bit::BLACK, 240, 1);
 	d.horLine(0, 120, colors16bit::BLACK, 320, 1);
+
 
 	//gradient
 	d.rectangle(5,5, colors16bit::BLACK,150, 110, 1);

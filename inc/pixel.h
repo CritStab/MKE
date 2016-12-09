@@ -11,7 +11,7 @@ private:
 	uint16_t x, y, color;
 public:
 
-	Pixel (uint16_t x, uint16_t y, const uint16_t color);
+	Pixel (uint16_t x_, uint16_t y_, const uint16_t color_);
 	void draw () const override;
 
 };

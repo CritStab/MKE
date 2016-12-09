@@ -35,10 +35,10 @@ class I8080
 {
 //variables
 public:
-
-protected:
 	Port high, low;
 	Pin rs, rst, wr, rd, cs;
+protected:
+
 private:
 
 
@@ -46,13 +46,13 @@ private:
 //functions
 public:
 	I8080();
-
-protected:
 	void index(uint16_t indx);
 	void data(uint16_t dta);
 	void putData (uint16_t dta);
 	void wReg (uint16_t indx , uint16_t dta);
 	void strob ();
+protected:
+
 private:
 
 

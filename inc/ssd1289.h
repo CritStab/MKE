@@ -5,7 +5,7 @@
 #ifndef SSD1289_H
 #define SSD1289_H
 
-class Ssd1289 : protected I8080
+class Ssd1289
 {
 //variables
 public:
@@ -18,6 +18,7 @@ public:
 	};
 protected:
 private:
+	I8080 driver;
 
 //functions
 public:
