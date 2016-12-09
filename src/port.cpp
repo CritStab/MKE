@@ -4,6 +4,7 @@ Port::Port (Gpio::Port port, uint8_t value)
 :Gpio(port)
 {
 	GpioBase [arrPort [prt]]->PDDR |= value << arrPinShift[prt];
+	GpioBase [arrPort [prt]]->PIDR |= value << arrPinShift[prt];
 }
 
 
