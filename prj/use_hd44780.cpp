@@ -1,26 +1,34 @@
-#include "MKE04Z1284.h"                // Device header
+#include "MKE04Z1284.h"
 #include "tact.h"
 #include "delay.h"
 #include "hd44780.h"
-#include "buffer.h"
-#include "pit.h"
-#include "pin.h"
 #include "senc.h"
+#include "buffer.h"
+#include "button.h"
+#include "senc.h"
+#include "pid.h"
+#include "pit.h"
 #include "systimer.h"
-//#include "button.h"
-#include "filter.h"
+#include "adc.h"
+#include "ftm.h"
+#include "pwm.h"
 
 
 
 Tact frq;
 Hd44780 lcd;
-Buffer val;
-Pit pit1 (Pit::channel::ch1, 1000, Pit::mode::ms);
-Pin pin1 (Gpio::Port::H, 0, Gpio::out::PushPull);
-Pin button (Gpio::Port::I, 4, Gpio::PP::PullDown);
-Senc encoder (Gpio::Port::B, 4, Gpio::Port::B, 5, 1000);
-//Button butt (Gpio::Port::I, 4);
-Filter filters;
+Button buttonEncoder (Gpio::Port::C, 7);
+Pin tilt (Gpio::Port::A, 0, Gpio::PP::PullDown);
+Buffer value;
+Pid regulator (9, 2, 3, 300);
+Senc encoder (Gpio::Port::C, 6, Gpio::Port::E, 2);
+Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
+Adc sensor (Adc::channel::SE1, Adc::resolution::bit_12, Adc::buffer::buffer8);
+Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
+Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 100);
+Pwm heater (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+//Pwm fan (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+//Pwm beeper (ftm2, Ftm::channel::ch2, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 
 
 extern "C" {
@@ -30,134 +38,102 @@ extern "C" {
 }
 
 
-uint8_t new_char0[8]
-{ 0x1F,
+const char cursorChar[8] =
+{
+0x18,
+0x1C,
+0x1E,
 0x1F,
 0x1F,
-0x1F,
-0x1F,
-0x1F,
-0x1F,
-0x1F,
+0x1E,
+0x1C,
+0x18,
 };
 
-void action ();
-
-void SysTick_Handler()
+const char celsiusChar[8] =
 {
-	pin1.togle();
-}
+0x18,
+0x18,
+0x00,
+0x06,
+0x09,
+0x08,
+0x09,
+0x06,
+};
 
-void PIT_CH1_IRQHandler()
+enum newChar {celsius, cursor};
+
+struct position
 {
-	pit1.clear_flag();
-	/*if (!button.state())
-	encoder.scan();*/
-
-}
+  uint8_t row;
+  uint8_t coloumn;
+}speedCursor, tempCursor, pCursor, iCursor, dCursor;
 
 
-void initIrq ();
 
-void IRQ_IRQHandler()
-{
-	IRQ->SC |= IRQ_SC_IRQACK_MASK;
-	pin1.set();
-}
+
+void mainScreen ();
+void pidScreen ();
+
 
 int main()
 {
 
-	lcd.sendString("Hello!!!");
-	lcd.setPosition(1, 0);
-	val.setFont (Array_char);
-
-	encoder.setValue(50);
-
-
-	filters.setFltDiv2 (Filter::busclkDivision::div4096);
-	filters.setFltDiv3(Filter::lpoclkDivision::div32);
-	//set 5.8kHz for encoder
-	//filters.setFilter(Filter::sourceFilter::IRQ_, Filter::clkFilter::busclkHigh);
-	//set 62.5hz==16ms for button and tilt sensor
-	//filters.setFilter(Filter::sourceFilter::PTI_, Filter::clkFilter::lpoclk);
-	PORT->IOFLT1 |= 0x03;
-	//filters.setFilter(Filter::sourceFilter::PTE, Filter::clkFilter::lpoclk);
-	//initIrq ();
-
-	pit1.interrupt_enable();
-	pit1.start();
-/*
-	//SysTick_BASE
-
-	 SysTick->LOAD=0xFFFFFF;		// Загрузка значения
-	 SysTick->VAL=48000;		// Обнуляем таймеры и флаги. Записью, помните?
-
-	 SysTick->CTRL=	SysTick_CTRL_CLKSOURCE_Msk |
-	                SysTick_CTRL_TICKINT_Msk   |
-	                SysTick_CTRL_ENABLE_Msk;*/
-	 Systimer (Systimer::mode::us, 250);
+	mainScreen ();
+	pidScreen ();
 
 
 	while (1)
 	{
-		//encoder.scan();
-		lcd.setPosition(1, 0);
-		val.parsDec16(encoder.getValue());
-		lcd.sendString(val.getContent());
-		delay_ms(1);
+
 	}
 }
 
-void action ()
+
+void mainScreen ()
 {
-	pin1.togle();
+  lcd.newChar (celsiusChar, celsius);
+  lcd.newChar (cursorChar, cursor);
+  lcd.setPosition (0, 0);
+  lcd.sendString ("HeatGun");
+  lcd.setPosition (0, 9);
+  lcd.sendString ("F=");
+  lcd.setPosition (0, 14);
+  lcd.data ('%');
+  lcd.setPosition (1, 0);
+  lcd.sendString ("Tc=");
+  lcd.setPosition (1, 6);
+  lcd.data (0);
+  lcd.setPosition (1, 9);
+  lcd.sendString ("Ts=");
+  lcd.setPosition (1, 15);
+  lcd.data (0);
+  lcd.setPosition (1, 7);
+  lcd.data (0xFF);
+  lcd.setPosition (0, 7);
+  lcd.data (0xFF);
+  speedCursor.row = 0;
+  speedCursor.coloumn = 9;
+  tempCursor.row = 1;
+  tempCursor.coloumn = 8;
 }
 
-
-void initIrq ()
+void pidScreen ()
 {
-	Pin irqPin (Gpio::Port::I, 4, Gpio::PP::PullUp);
-	SIM->SCGC |= SIM_SCGC_IRQ_MASK;
-	IRQ->SC &= ~(IRQ_SC_IRQEDG_MASK|IRQ_SC_IRQMOD_MASK|IRQ_SC_IRQPDD_MASK) ;
-	IRQ->SC |= IRQ_SC_IRQPE_MASK| IRQ_SC_IRQIE_MASK;
-	NVIC_EnableIRQ(IRQ_IRQn);
+  lcd.setPosition (0, 17);
+  lcd.data ('P');
+  lcd.setPosition (0, 19);
+  lcd.data ('.');
+  lcd.setPosition (0, 22);
+  lcd.sendString ("I");
+  lcd.setPosition (0, 24);
+  lcd.data ('.');
+  lcd.setPosition (0, 27);
+  lcd.sendString ("D");
+  lcd.setPosition (0, 29);
+  lcd.data ('.');
+  lcd.setPosition (1, 17);
+  lcd.sendString("PID");
 }
 
-void initAdc (uint8_t n)
-{
-	SIM->SCGC |= SIM_SCGC_ADC_MASK|ADC_SC2_ADTRG_MASK;
-	ADC->SC2 &= ~ ADC_SC2_REFSEL_MASK;
-	//ADC->SC2 |=  ADC_SC2_REFSEL(1);
-
-	ADC->SC3 &=  ~ (ADC_SC3_ADICLK_MASK|ADC_SC3_ADIV_MASK|ADC_SC3_MODE_MASK);
-	ADC->SC3 |= ADC_SC3_ADIV(3) | ADC_SC3_MODE(2);
-	ADC->APCTL1 |= 1 << n;
-}
-
-uint16_t getAdc (uint8_t n)
-{
-	ADC->SC1 = ADC_SC1_ADCH(n);
-	while (!ADC->SC1&ADC_SC1_COCO_MASK);
-	return ADC->R;
-}
-/*
-void initIrq ()
-{
-
-
-	PORT->IOFLT0 &=~ PORT_IOFLT0_FLTDIV2_MASK;
-	PORT->IOFLT0 |=PORT_IOFLT0_FLTDIV2(2);
-	PORT->IOFLT1 &= ~PORT_IOFLT1_FLTIRQ_MASK;
-	PORT->IOFLT1 |= PORT_IOFLT1_FLTIRQ(2);
-
-	//falling edge
-	IRQ->SC &= ~ (IRQ_SC_IRQEDG_MASK | IRQ_SC_IRQMOD_MASK);
-	IRQ->SC |= IRQ_SC_IRQPDD_MASK | IRQ_SC_IRQPE_MASK;
-}*/
-
-void initFilter (Gpio &pin, uint8_t pin_)
-{
-	pin.settingPin(pin_, Gpio::mode::Input);
-
-}

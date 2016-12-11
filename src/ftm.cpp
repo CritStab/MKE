@@ -18,6 +18,9 @@ Ftm::Ftm (nFtm n_, division div, sourceClock s)
 Ftm::Ftm (nFtm n_, division div, uint16_t p, sourceClock s)
 {
 	num_ftm = static_cast <uint8_t> (n_);
+	//maped ftm2 ch2 at D0, ch3 at D1
+		SIM->PINSEL1 &= ~(SIM_PINSEL1_FTM2PS2_MASK | SIM_PINSEL1_FTM2PS3_MASK);
+		SIM->PINSEL1 |= SIM_PINSEL1_FTM2PS3(0x01) | SIM_PINSEL1_FTM2PS2(0x01);
 	SIM->SCGC |= 1 << (SIM_SCGC_FTM0_SHIFT+num_ftm);
 	//FTM_MODE_REG(ftm_ptr[num_ftm]) |= FTM_MODE_WPDIS_MASK;
 

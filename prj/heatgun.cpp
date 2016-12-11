@@ -27,12 +27,6 @@ const double p  = 9.0;
 const double i  = 2.0;
 const double d  = 3.0;
 
-const uint8_t buttEncPin = 0;
-const uint8_t tiltPin = 2;
-
-const uint8_t encAPin = 6;
-const uint8_t encBPin = 7;
-
 const uint16_t TsetVal=250;
 const uint16_t speedVal=60;
 
@@ -69,18 +63,18 @@ Tact frq;
 Hd44780 lcd;
 
 
-Button buttonEncoder (Gpio::Port::A, buttEncPin);
-Pin tilt (Gpio::Port::A, tiltPin, Gpio::PP::PullUp);
+Button buttonEncoder (Gpio::Port::C, 7);
+Pin tilt (Gpio::Port::A, 0, Gpio::PP::PullDown);
 Buffer value;
 Pid regulator (p, i, d, TsetVal);
-Senc encoder (Gpio::Port::C, encAPin, Gpio::Port::C, encBPin);
+Senc encoder (Gpio::Port::C, 6, Gpio::Port::E, 2);
 Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
-Adc sensor (Adc::channel::SE10, Adc::resolution::bit_12, Adc::buffer::buffer8);
+Adc sensor (Adc::channel::SE1, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
 Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 100);
 Pwm heater (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Pwm fan (ftm2, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
-Pwm beeper (ftm2, Ftm::channel::ch1, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm fan (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
+Pwm beeper (ftm2, Ftm::channel::ch2, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 
 
 
@@ -171,7 +165,7 @@ void PIT_CH1_IRQHandler()
 	if (!flag.beeper) beeper.setValue(0);
 	else
 	{
-		beeper.setValue(50);
+		beeper.setValue(100);
 		flag.beeper = 0;
 	}
 
@@ -290,15 +284,13 @@ int main()
 
 void initPwm ()
 {
-	//maped ftm1 ch1 at E7
-	//SIM->PINSEL |= SIM_PINSEL_FTM1PS1_MASK;
-
 	//maped ftm1 ch0 at H2
 	SIM->PINSEL |= SIM_PINSEL_FTM1PS0_MASK;
 
 
-	//maped ftm2 ch1 at c1, ch0 at c0
-	SIM->PINSEL1 &= ~(SIM_PINSEL1_FTM2PS0_MASK|SIM_PINSEL1_FTM2PS1_MASK);
+	//maped ftm2 ch2 at D0, ch3 at D1
+	SIM->PINSEL1 &= ~(SIM_PINSEL1_FTM2PS2_MASK | SIM_PINSEL1_FTM2PS3_MASK);
+	SIM->PINSEL1 |= SIM_PINSEL1_FTM2PS3(0x01) | SIM_PINSEL1_FTM2PS2(0x01);
 }
 
 void initPosition ()
@@ -309,9 +301,9 @@ void initPosition ()
   tempCursor.row = 1;
   pCursor.coloumn = 16;
   pCursor.row = 0;
-  iCursor.coloumn = 21;
+  iCursor.coloumn = 22;
   iCursor.row = 0;
-  dCursor.coloumn = 26;
+  dCursor.coloumn = 27;
   dCursor.row = 0;
 }
 
@@ -338,12 +330,12 @@ void initDataPosition ()
   iVal.value = regulator.getI ();
   iVal.highLimit = 99;
   iVal.lowLimit = 0;
-  iVal.pos.coloumn = 23;
+  iVal.pos.coloumn = 24;
   iVal.pos.row = 0;
   dVal.value = regulator.getD ();
-  dVal.highLimit = 99;
+  dVal.highLimit = 999;
   dVal.lowLimit = 0;
-  dVal.pos.coloumn = 28;
+  dVal.pos.coloumn = 29;
   dVal.pos.row = 0;
   pidVal.value = 0;
   pidVal.pos.coloumn = 21;
@@ -382,15 +374,15 @@ void pidScreen ()
 {
   lcd.setPosition (0, 17);
   lcd.data ('P');
-  lcd.setPosition (0, 19);
+  lcd.setPosition (0, 20);
   lcd.data ('.');
-  lcd.setPosition (0, 22);
+  lcd.setPosition (0, 23);
   lcd.sendString ("I");	
-  lcd.setPosition (0, 24);
+  lcd.setPosition (0, 25);
   lcd.data ('.');
-  lcd.setPosition (0, 27);
+  lcd.setPosition (0, 28);
   lcd.sendString ("D");	
-  lcd.setPosition (0, 29);
+  lcd.setPosition (0, 30);
   lcd.data ('.');
   lcd.setPosition (1, 17);
   lcd.sendString("PID");

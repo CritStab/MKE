@@ -12,6 +12,7 @@ Tact::Tact ()
 	cpu_clock = 48;
 	bus_clock = 24;
 	initFEI ();
+	SIM->SOPT0 &= ~SIM_SOPT0_NMIE_MASK;
 }
 
 void Tact::initFEI ()

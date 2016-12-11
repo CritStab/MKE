@@ -131,7 +131,10 @@ bool Adc::getCoco ()
 
 void Adc::convertBuffer()
 {
-	for (uint8_t i=0;i<deptBuffer;++i) ADC->SC1 = n_channel;
+	for (uint8_t i=0;i<deptBuffer;++i)
+	{
+		ADC->SC1 = n_channel;
+	}
 	ADC->SC1 = sc1Mask;
 }
 

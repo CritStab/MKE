@@ -8,6 +8,7 @@ Hd44780::Hd44780()
  e (hd44780Def::eport, hd44780Def::epin, Gpio::out::PushPull),
  rw (hd44780Def::rwport, hd44780Def::rwpin, Gpio::out::PushPull)
 {
+
 	init();
 	position=0;
 }
