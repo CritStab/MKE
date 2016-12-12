@@ -6,13 +6,13 @@
 #include "pixel.h"
 #include "verline.h"
 #include "horline.h"
+#include "rectangle.h"
 #include "colors16bit.h"
 
 Tact frq;
 
 
 Shape * layer1[]= {};
-
 
 
 extern "C" {
@@ -27,6 +27,9 @@ const uint8_t ArialBlack_8_data[] = {
 
 void mainScreen (Ssd1289 &);
 
+void screen ();
+void drawScreen (Shape *);
+
 
 int main()
 {
@@ -39,17 +42,9 @@ int main()
 	display.fillScreen(colors16bit::BLUE);
 
 	Shape::driver = &display;
-	Horline line1 (0, 120, colors16bit::BLACK, 320, 1);
-	layer1[0] = &line1;
-	Verline line2 (0, 120, colors16bit::BLACK, 320, 1);
-	layer1[0] = &line1;
-	layer1[1] = &line2;
-	layer1[0]->draw();
-	layer1[1]->draw();
-	//display.drawArr(50,50,ssd1289Color::BLUE, ssd1289Color::RED, ArialBlack_8_data,2);
-	//display.symbol(100,100, ssd1289Color::BLUE, ssd1289Color::RED, 1, lat);
-	//display.horLine(10, 100, ssd1289Color::YELLOW, 200, 5);
-	//mainScreen(display);
+	delay_ms(2000);
+	mainScreen(display);
+
 	while (1)
 	{
 
@@ -69,6 +64,28 @@ void mainScreen (Ssd1289 & d)
 	d.rectangle(165,5, colors16bit::BLACK,150, 110, 1);
 	d.rectangle(5,125, colors16bit::BLACK,150, 110, 1);
 	d.rectangle(165,125, colors16bit::BLACK,150, 110, 1);
+}
+
+void screen ()
+{
+	Horline screen (0, 0, colors16bit::BLACK, 320, 240);
+	Horline hLine (0, 120, colors16bit::WHITE, 320, 1);
+	Verline vline (0, 120, colors16bit::WHITE, 320, 1);
+
+	layer1[0] = &screen;
+	layer1[1] = &hLine;
+	layer1[2] = &vline;
+
+}
+
+void drawScreen (Shape * scr)
+{
+	uint8_t n = sizeof scr/sizeof scr[0];
+	for (uint8_t i=0;i<n;++i)
+	{
+		scr->draw();
+		scr++;
+	}
 }
 
 

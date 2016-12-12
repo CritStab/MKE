@@ -73,13 +73,27 @@ void Buffer::parsDec16 (const uint16_t & val, uint8_t n)
 
 void Buffer::parsFloat (const uint16_t & val)
 {
- uint8_t arrVal[2] = {0};
+  uint8_t arrVal[2] = {0};
   uint16_t temp = val;
   for (arrVal[0]=0;temp>=10;++arrVal[0])temp -=10;
   arrVal [1] = temp%10;
   arr [2] = font [arrVal [0]];
   arr [3] = '.';
   arr [4] = font [arrVal [1]];
+}
+
+void Buffer::parsFloatD (const uint16_t & val)
+{
+  uint8_t arrVal[3] = {0};
+  uint16_t temp = val;
+  for (arrVal[0]=0;temp>=100;++arrVal[0])temp -=100;
+  for (arrVal[1]=0;temp>=10;++arrVal[1])temp -=10;
+  arrVal [2] = temp%10;
+  if (arrVal [0]==0) arr [1] = font [10];
+  else arr [1] = font [arrVal [0]];
+  arr [2] = font [arrVal [1]];
+  arr [3] = '.';
+  arr [4] = font [arrVal [2]];
 }
 
 void Buffer::parsHex32 (uint32_t value)

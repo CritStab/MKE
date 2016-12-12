@@ -27,12 +27,12 @@ const double p  = 9.0;
 const double i  = 2.0;
 const double d  = 3.0;
 
-const uint16_t TsetVal=250;
-const uint16_t speedVal=60;
+const uint16_t TsetVal=300;
+const uint16_t speedVal=80;
 
-const uint8_t coolingTemp = 50;
+const uint8_t coolingTemp = 60;
 const uint8_t coolingSpeed1 = 100;
-const uint8_t coolingSpeed2 = 40;
+const uint8_t coolingSpeed2 = 60;
 
 
 const char cursorChar[8] =
@@ -189,13 +189,18 @@ void PIT_CH1_IRQHandler()
 
 	//draw pid screen
 	tempPtr = &ScreenVal[1][0];
-	for (uint8_t i=0;i<3;++i)
+	for (uint8_t i=1;i<3;++i)
 	{
 		lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
 	    value.parsFloat ((*tempPtr)->value);
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
+
+	//draw P
+	lcd.setPosition(pVal.pos.row, pVal.pos.coloumn);
+	value.parsFloatD (pVal.value);
+	lcd.sendString (value.getElement(1));
 
 	//draw pid Value
 	lcd.setPosition(pidVal.pos.row, pidVal.pos.coloumn);
