@@ -23,14 +23,14 @@ extern "C" {
 
 //pid value
 
-const double p  = 9.0;
-const double i  = 2.0;
-const double d  = 3.0;
+const double p  = 2.0;
+const double i  = 0.3;
+const double d  = 0.5;
 
-const uint16_t TsetVal=300;
-const uint16_t speedVal=80;
+const uint16_t TsetVal=280;
+const uint16_t speedVal=90;
 
-const uint8_t coolingTemp = 60;
+const uint8_t coolingTemp = 100;
 const uint8_t coolingSpeed1 = 100;
 const uint8_t coolingSpeed2 = 60;
 
@@ -155,6 +155,8 @@ void PIT_CH1_IRQHandler()
 	{
 		//update fan speed
 		fan.setValue(speed.value);
+		//update heater value
+		heater.setValue(pidVal.value);
 	}
 
 	buttonEncoder.scanAction();
@@ -188,7 +190,7 @@ void PIT_CH1_IRQHandler()
 	}
 
 	//draw pid screen
-	tempPtr = &ScreenVal[1][0];
+	tempPtr = &ScreenVal[1][1];
 	for (uint8_t i=1;i<3;++i)
 	{
 		lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
@@ -226,29 +228,29 @@ void ADC_IRQHandler()
 uint16_t tempAdc = 0;
     for (uint8_t i=0;i<8;++i)
     {
-      tempAdc += (sensor.getData() >> 2);
+      tempAdc += sensor.getData();
     }
 
-	currTemp.value = tempAdc >> 4;
+    tempAdc >>=3;
+	currTemp.value = tempAdc/5 - 24;
 
 	//update PID
 	regulator.setP (pVal.value);
 	regulator.setI (iVal.value);
 	regulator.setD (dVal.value);
+	regulator.setT(setTemp.value);
 
 
 	if (tilt.state())
 	{
 		//calculate PID
 		pidVal.value = regulator.compute (currTemp.value);
-		//update heater value
-		heater.setValue(pidVal.value);
+
 	}
 }
 
 void initIrq ();
 void initPwm ();
-
 
 int main()
 {
@@ -328,7 +330,7 @@ void initDataPosition ()
   setTemp.pos.coloumn = 12;
   setTemp.pos.row = 1;
   pVal.value = regulator.getP();
-  pVal.highLimit = 99;
+  pVal.highLimit = 999;
   pVal.lowLimit = 0;
   pVal.pos.coloumn = 18;
   pVal.pos.row = 0;
@@ -338,7 +340,7 @@ void initDataPosition ()
   iVal.pos.coloumn = 24;
   iVal.pos.row = 0;
   dVal.value = regulator.getD ();
-  dVal.highLimit = 999;
+  dVal.highLimit = 99;
   dVal.lowLimit = 0;
   dVal.pos.coloumn = 29;
   dVal.pos.row = 0;

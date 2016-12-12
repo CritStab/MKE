@@ -86,6 +86,11 @@ void Pid::setD (uint16_t val)
   d = val;
 }
 
+void Pid::setT (uint16_t val)
+{
+	setPoint = val;
+}
+
 void Pid::setPidLimit (uint16_t val)
 {
 	pidLimit = val;

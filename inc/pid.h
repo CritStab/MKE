@@ -37,6 +37,7 @@ public:
   void setP (uint16_t);
   void setI (uint16_t);
   void setD (uint16_t);
+  void setT (uint16_t);
   void setPidLimit (uint16_t);
   void reset ();
 };
