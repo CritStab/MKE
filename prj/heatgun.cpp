@@ -143,6 +143,7 @@ void clearCursors ();
 
 void PIT_CH1_IRQHandler()
 {
+	static uint8_t counter=0;
 	updateLcd.clear_flag();
 	//update screen
 	if (!tilt.state())
@@ -179,9 +180,20 @@ void PIT_CH1_IRQHandler()
 	screenF [flag.screens]();
 
 	//===draw value===//
+
+	//draw current value
+	counter++;
+	if (counter>2)
+	{
+		lcd.setPosition (currTemp.pos.row, currTemp.pos.coloumn);
+		value.parsDec16 (currTemp.value, 3);
+		lcd.sendString (value.getElement(2));
+		counter = 0;
+	}
+
 	//draw main screen
 	data **tempPtr = &ScreenVal[0][0];
-	for (uint8_t i=0;i<3;++i)
+	for (uint8_t i=0;i<2;++i)
 	{
 		lcd.setPosition ((*tempPtr)->pos.row, (*tempPtr)->pos.coloumn);
 	    value.parsDec16 ((*tempPtr)->value, 3);
