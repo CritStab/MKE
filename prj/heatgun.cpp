@@ -144,6 +144,7 @@ void clearCursors ();
 void PIT_CH1_IRQHandler()
 {
 	static uint8_t counter=0;
+	static uint16_t curent=0;
 	updateLcd.clear_flag();
 	//update screen
 	if (!tilt.state())
@@ -182,13 +183,19 @@ void PIT_CH1_IRQHandler()
 	//===draw value===//
 
 	//draw current value
-	counter++;
-	if (counter>2)
+
+	if (counter>3)
 	{
+		curent >>=2;
 		lcd.setPosition (currTemp.pos.row, currTemp.pos.coloumn);
-		value.parsDec16 (currTemp.value, 3);
+		value.parsDec16 (curent, 3);
 		lcd.sendString (value.getElement(2));
 		counter = 0;
+	}
+	else
+	{
+		curent += currTemp.value;
+		counter++;
 	}
 
 	//draw main screen
@@ -230,10 +237,6 @@ void SysTick_Handler()
     if (flag.encLongPress)encoder.scan ();
 }
 
-void IRQ_IRQHandler()
-{
-	IRQ->SC |= IRQ_SC_IRQACK_MASK;
-}
 
 void ADC_IRQHandler()
 {
