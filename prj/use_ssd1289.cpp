@@ -80,7 +80,7 @@ void screen ()
 
 void drawScreen (Shape * scr)
 {
-	uint8_t n = sizeof scr/sizeof scr[0];
+	uint8_t n = sizeof scr/sizeof *scr;
 	for (uint8_t i=0;i<n;++i)
 	{
 		scr->draw();
