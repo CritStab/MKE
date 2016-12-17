@@ -14,6 +14,7 @@
 #include "pwm.h"
 
 
+
 extern "C" {
 	void SysTick_Handler();
 	void ADC_IRQHandler();
@@ -28,7 +29,7 @@ const double i  = 0.3;
 const double d  = 0.5;
 
 const uint16_t TsetVal=280;
-const uint16_t speedVal=90;
+const uint16_t speedVal=100;
 
 const uint8_t coolingTemp = 100;
 const uint8_t coolingSpeed1 = 100;
@@ -71,7 +72,7 @@ Senc encoder (Gpio::Port::C, 6, Gpio::Port::E, 2);
 Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
 Adc sensor (Adc::channel::SE1, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
-Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div32, 100);
+Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div16, 100);
 Pwm heater (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm fan (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm beeper (ftm2, Ftm::channel::ch2, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
@@ -191,6 +192,7 @@ void PIT_CH1_IRQHandler()
 		value.parsDec16 (curent, 3);
 		lcd.sendString (value.getElement(2));
 		counter = 0;
+		curent = 0;
 	}
 	else
 	{
@@ -207,6 +209,10 @@ void PIT_CH1_IRQHandler()
 	    lcd.sendString (value.getElement(2));
 	    *tempPtr++;
 	}
+
+	lcd.setPosition(1, 27);
+	value.parsDec16 (currTemp.value, 3);
+	lcd.sendString (value.getElement(2));
 
 	//draw pid screen
 	tempPtr = &ScreenVal[1][1];

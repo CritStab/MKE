@@ -8,6 +8,7 @@
 
 class Port: protected Gpio
 {
+	//uint8_t val;
 //functions
 public:
 	Port (Gpio::Port port, uint8_t value);

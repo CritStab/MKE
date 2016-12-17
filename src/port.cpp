@@ -10,7 +10,6 @@ Port::Port (Gpio::Port port, uint8_t value)
 
 void Port::set(uint8_t value)
 {
-	clear (value);
 	GpioBase [arrPort [prt]]->PSOR |= value << arrPinShift[prt];
 }
 

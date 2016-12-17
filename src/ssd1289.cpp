@@ -64,7 +64,9 @@ void Ssd1289::fillScreen (uint16_t color)
 	driver.cs.clear();
 	//data
 	driver.rs.set();
-	driver.low.set(color&0x0044);
+	driver.low.clear(0xFF);
+	driver.high.clear(0xFF);
+	driver.low.set(color&0x00FF);
 	driver.high.set(color>>8);
 	for (uint32_t i=0;i<76800;++i)
 	{

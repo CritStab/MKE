@@ -30,6 +30,8 @@ void mainScreen (Ssd1289 &);
 void screen ();
 void drawScreen (Shape *);
 
+const uint16_t colors [] = {colors16bit::BLACK, colors16bit::RED, colors16bit::BLUE,  colors16bit::GREEN, colors16bit::CYAN, colors16bit::MAGENTA,  colors16bit::YELLOW, colors16bit::WHITE};
+
 
 int main()
 {
@@ -39,14 +41,23 @@ int main()
 	lat.width = 1;
 	lat.shift = 0;
 	lat.font = ArialBlack_8_data;
-	display.fillScreen(colors16bit::BLUE);
+	display.horLine(10,10, colors16bit::BLACK, 100, 5);
+	display.symbol(50,50, colors16bit::WHITE, colors16bit::BLACK, 0, lat);
 
-	Shape::driver = &display;
-	delay_ms(2000);
+
+	/*Shape::driver = &display;
+
 	mainScreen(display);
+	display.drawPic(50, 50 )*/
 
 	while (1)
 	{
+		/*uint8_t n = sizeof colors/sizeof *colors;
+		for (uint8_t i=0;i<n;++i)
+		{
+			display.fillScreen(colors [i]);
+			delay_ms(1000);
+		}*/
 
 	}
 }
