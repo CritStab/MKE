@@ -29,11 +29,11 @@ const double i  = 0.3;
 const double d  = 0.5;
 
 const uint16_t TsetVal=280;
-const uint16_t speedVal=100;
+const uint16_t speedVal=10;
 
 const uint8_t coolingTemp = 100;
-const uint8_t coolingSpeed1 = 100;
-const uint8_t coolingSpeed2 = 60;
+const uint16_t coolingSpeed1 = 1000;
+const uint16_t coolingSpeed2 = 960;
 
 
 const char cursorChar[8] =
@@ -72,7 +72,7 @@ Senc encoder (Gpio::Port::C, 6, Gpio::Port::E, 2);
 Pit updateLcd (Pit::channel::ch1, 100, Pit::mode::ms);
 Adc sensor (Adc::channel::SE1, Adc::resolution::bit_12, Adc::buffer::buffer8);
 Ftm ftm1 (Ftm::nFtm::FTM_1, Ftm::division::div128, 37500);
-Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div16, 100);
+Ftm ftm2 (Ftm::nFtm::FTM_2, Ftm::division::div8, 1000);
 Pwm heater (ftm1, Ftm::channel::ch0, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm fan (ftm2, Ftm::channel::ch3, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
 Pwm beeper (ftm2, Ftm::channel::ch2, Pwm::mode::EdgePwm, Pwm::pulseMode::highPulse);
@@ -120,6 +120,11 @@ data * ScreenVal [2] [4]= {
 };
 
 
+uint16_t speedV [10] = {700, 760, 800, 840, 880, 920, 940, 960, 980, 1000};
+
+//uint16_t speedV [10] = {1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000};
+
+
 void mainScreen ();
 void pidScreen ();
 void changeScreen ();
@@ -157,7 +162,7 @@ void PIT_CH1_IRQHandler()
 	else
 	{
 		//update fan speed
-		fan.setValue(speed.value);
+		fan.setValue(speedV [speed.value]);
 		//update heater value
 		heater.setValue(pidVal.value);
 	}
@@ -338,7 +343,7 @@ void initPosition ()
 void initDataPosition ()
 {
   speed.value = speedVal;
-  speed.highLimit = 100;
+  speed.highLimit = 10;
   speed.lowLimit = 0;
   speed.pos.coloumn = 11;
   speed.pos.row = 0;

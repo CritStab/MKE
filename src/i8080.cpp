@@ -35,8 +35,8 @@ void I8080::data(uint16_t val)
 	cs.clear();
 	//data
 	rs.set();
-	low.clear(i8080def::lowDataPins);
-	high.clear(i8080def::highDataPins);
+	low.clear(0xFF);
+	high.clear(0xFF);
 	low.set(val&0x00FF);
 	high.set(val>>8);
 	wr.clear();
@@ -46,8 +46,8 @@ void I8080::data(uint16_t val)
 
 void I8080::putData (uint16_t val)
 {
-	low.clear(i8080def::lowDataPins);
-	high.clear(i8080def::highDataPins);
+	low.clear(0xFF);
+	high.clear(0xFF);
 	low.set(val&0x00FF);
 	high.set(val>>8);
 	wr.clear();
@@ -59,16 +59,16 @@ void I8080::wReg (uint16_t indx , uint16_t dta)
 	cs.clear();
 	//command
 	rs.clear();
-	low.clear(i8080def::lowDataPins);
-	high.clear(i8080def::highDataPins);
+	low.clear(0xFF);
+	high.clear(0xFF);
 	low.set(indx&0x00FF);
 	high.set(indx>>8);
 	wr.clear();
 	wr.set();
 	//data
 	rs.set();
-	low.clear(i8080def::lowDataPins);
-	high.clear(i8080def::highDataPins);
+	low.clear(0xFF);
+	high.clear(0xFF);
 	low.set(dta&0x00FF);
 	high.set(dta>>8);
 	wr.clear();

@@ -107,7 +107,7 @@ void Ssd1289::setCursor (uint16_t x , uint16_t y)
 	driver.wReg(0x004f, y);
 }
 
-void Ssd1289::drawArr (uint16_t x , uint16_t y, uint16_t color, uint16_t fon, const uint8_t *arr, uint8_t l)
+void Ssd1289::drawArr (uint16_t x , uint16_t y, const uint16_t color, uint16_t fon, const uint8_t *arr, uint8_t l)
 {
 	uint16_t colors [2] = {fon, color};
 	setCursor(x, y);
@@ -117,7 +117,10 @@ void Ssd1289::drawArr (uint16_t x , uint16_t y, uint16_t color, uint16_t fon, co
 	driver.rs.set();
 	for (uint8_t j=0;j<l;++j, ++arr)
 	{
-		for (uint8_t k=0;k<8;++k) driver.putData(colors [*arr&(1 << (7-k))]);
+		for (uint8_t k=0;k<8;++k)
+		{
+			driver.putData(colors [*arr&(1 << (7-k))]);
+		}
 	}
 	driver.cs.set();
 }
@@ -133,13 +136,17 @@ void Ssd1289::drawPic (uint16_t x , uint16_t y, const uint16_t *arr, uint8_t len
 		//data
 		driver.rs.set();
 
-		for (uint8_t j=0;j<length;++j) driver.putData(*arr++);
+		for (uint8_t j=0;j<length;++j)
+		{
+			driver.putData(*arr++);
+		}
 	}
 	driver.cs.set();
 }
 
-void Ssd1289::horLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick)
+void Ssd1289::horLine (uint16_t x, uint16_t y, const uint16_t color, uint16_t length, uint8_t thick)
 {
+
 	for (uint8_t i=0;i<thick;++i)
 	{
 		driver.cs.set();
@@ -148,14 +155,19 @@ void Ssd1289::horLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, 
 		driver.cs.clear();
 		//data
 		driver.rs.set();
-		driver.low.set(color&0x0044);
+		driver.low.clear(0xFF);
+		driver.high.clear(0xFF);
+		driver.low.set(color&0x00FF);
 		driver.high.set(color>>8);
-		for (uint8_t j=0;j<length;++j) driver.strob();
+		for (uint8_t j=0;j<length;++j)
+		{
+			driver.strob();
+		}
 	}
 	driver.cs.set();
 }
 
-void Ssd1289::verLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, uint8_t thick)
+void Ssd1289::verLine (uint16_t x, uint16_t y, const uint16_t color, uint16_t length, uint8_t thick)
 {
 	for (uint8_t i=0;i<length;++i)
 	{
@@ -165,9 +177,14 @@ void Ssd1289::verLine (uint16_t x, uint16_t y, uint16_t color, uint16_t length, 
 		driver.cs.clear();
 		//data
 		driver.rs.set();
-		driver.low.set(color&0x0044);
+		driver.low.clear(0xFF);
+		driver.high.clear(0xFF);
+		driver.low.set(color&0x00FF);
 		driver.high.set(color>>8);
-		for (uint8_t j=0;j<thick;++j) driver.strob();
+		for (uint8_t j=0;j<thick;++j)
+		{
+			driver.strob();
+		}
 	}
 	driver.cs.set();
 }

@@ -7,7 +7,6 @@ Port::Port (Gpio::Port port, uint8_t value)
 	GpioBase [arrPort [prt]]->PIDR |= value << arrPinShift[prt];
 }
 
-
 void Port::set(uint8_t value)
 {
 	GpioBase [arrPort [prt]]->PSOR |= value << arrPinShift[prt];

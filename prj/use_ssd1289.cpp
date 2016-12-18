@@ -30,7 +30,10 @@ void mainScreen (Ssd1289 &);
 void screen ();
 void drawScreen (Shape *);
 
-const uint16_t colors [] = {colors16bit::BLACK, colors16bit::RED, colors16bit::BLUE,  colors16bit::GREEN, colors16bit::CYAN, colors16bit::MAGENTA,  colors16bit::YELLOW, colors16bit::WHITE};
+const uint16_t colors [] = {colors16bit::BLACK, colors16bit::RED, colors16bit::BLUE,  colors16bit::GREEN, colors16bit::CYAN, colors16bit::MAGENTA,  colors16bit::YELLOW, colors16bit::WHITE,
+ colors16bit::GRAY, colors16bit::SKY, colors16bit::ORANGE,  colors16bit::PINK, colors16bit::BROWN,colors16bit::VIOLET, colors16bit::SILVER,
+ colors16bit::GOLD,  colors16bit::BEGH, colors16bit::NAVY, colors16bit::DARK_GREEN, colors16bit::DARK_CYAN, colors16bit::MAROON,  colors16bit::PURPLE,
+colors16bit::LIGHT_GREY,  colors16bit::DARK_GREY};
 
 
 int main()
@@ -41,7 +44,10 @@ int main()
 	lat.width = 1;
 	lat.shift = 0;
 	lat.font = ArialBlack_8_data;
-	display.horLine(10,10, colors16bit::BLACK, 100, 5);
+	display.fillScreen (colors16bit::WHITE);
+	display.fillScreen (colors16bit::LIGHT_GREY);
+	//display.drawArr(50,50,colors16bit::BLACK, colors16bit::WHITE, ArialBlack_8_data, 10);
+	display.horLine(10,10, colors16bit::RED, 100, 5);
 	display.symbol(50,50, colors16bit::WHITE, colors16bit::BLACK, 0, lat);
 
 
@@ -52,12 +58,12 @@ int main()
 
 	while (1)
 	{
-		/*uint8_t n = sizeof colors/sizeof *colors;
+		uint8_t n = sizeof colors/sizeof *colors;
 		for (uint8_t i=0;i<n;++i)
 		{
 			display.fillScreen(colors [i]);
 			delay_ms(1000);
-		}*/
+		}
 
 	}
 }
