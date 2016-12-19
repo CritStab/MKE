@@ -24,6 +24,14 @@ extern "C" {
 const uint8_t ArialBlack_8_data[] = {
 0x00,0x00,0x20,0x05,0x08,0x25,0xE2,0x30,0x0A,0x62};
 
+enum class color: uint8_t {red, green, blue};
+
+union rgb24
+{
+	uint32_t code;
+	uint8_t color[3];
+};
+
 
 void mainScreen (Ssd1289 &);
 
@@ -38,6 +46,9 @@ colors16bit::LIGHT_GREY,  colors16bit::DARK_GREY};
 
 int main()
 {
+	rgb24 purple;
+	purple.code = 0x800080;
+	uint8_t red = purple.color [(uint8_t)color::red];
 	Ssd1289 display;
 	Ssd1289::sFont lat;
 	lat.height = 10;

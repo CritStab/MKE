@@ -5,6 +5,19 @@
 #ifndef SSD1289_H
 #define SSD1289_H
 
+namespace ssd1289Reg
+{
+	const uint16_t ram = 0x0022;
+	const uint16_t gddramX = 0x004E;
+	const uint16_t gddramY = 0x004F;
+	const uint16_t scanPosition = 0x000F;
+	const uint16_t entryMode = 0x0011;
+	const uint16_t verticalScroll1 = 0x0041;
+	const uint16_t verticalScroll2 = 0x0042;
+
+}
+
+
 class Ssd1289
 {
 //variables
