@@ -351,7 +351,7 @@ void initDataPosition ()
   currTemp.pos.coloumn = 3;
   currTemp.pos.row = 1;
   setTemp.value = TsetVal;
-  setTemp.highLimit = 450;
+  setTemp.highLimit = 850;
   setTemp.lowLimit = 0;
   setTemp.pos.coloumn = 12;
   setTemp.pos.row = 1;
