@@ -96,7 +96,7 @@ struct position
 {
   uint8_t row;
   uint8_t coloumn;
-}speedCursor, tempCursor, pCursor, iCursor, dCursor;
+}speedCursor, tempCursor, pCursor, iCursor, dCursor, pidCursor;
 
 struct data
 {
@@ -106,9 +106,9 @@ struct data
   position pos;	
 }speed, currTemp, setTemp, pVal, iVal, dVal, pidVal;
 
-position * ScreenCursor [2][3] = {
+position * ScreenCursor [2][4] = {
 {&speedCursor, &tempCursor}, 
-{&pCursor, &iCursor, &dCursor}
+{&pCursor, &iCursor, &dCursor, &pidCursor}
 };
 
 enum newChar {celsius, cursor};
@@ -338,6 +338,8 @@ void initPosition ()
   iCursor.row = 0;
   dCursor.coloumn = 27;
   dCursor.row = 0;
+  pidCursor.coloumn = 21;
+  pidCursor.row = 1;
 }
 
 void initDataPosition ()
