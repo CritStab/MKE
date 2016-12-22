@@ -19,6 +19,7 @@ private:
   uint16_t low;
   uint16_t value;
   uint8_t previusState;
+  uint16_t delta;
 
 public:
   Senc (Gpio::Port, uint8_t , Gpio::Port, uint8_t);
@@ -28,6 +29,7 @@ public:
   void scan ();
   void setHigh (uint16_t);
   void setLow (uint16_t);
+  void setGrade (uint16_t);
 
 };
 

@@ -5,6 +5,7 @@ Senc::Senc (Gpio::Port pA, uint8_t pinA, Gpio::Port pB, uint8_t pinB)
 :pha (pA, pinA, Gpio::PP::PullDown), phb (pB, pinB, Gpio::PP::PullDown)
 {
   low = 0;
+  delta = 1;
 }
 
 
@@ -13,6 +14,7 @@ Senc::Senc (Gpio::Port pA, uint8_t pinA, Gpio::Port pB, uint8_t pinB,uint16_t ra
 {
   high = range << 1;
   low = 0;
+  delta = 1;
 }
 
 uint16_t Senc::getValue ()
@@ -34,33 +36,33 @@ void Senc::scan ()
     case 2:
     {
     if (new_ == 3&&value==high);
-    if (new_ == 3&&value<high)value++;
+    if (new_ == 3&&value<high)value+=delta;
     if (new_ == 0&&value==low);
-    if (new_ == 0&&value>low) value--;
+    if (new_ == 0&&value>low) value-=delta;
     break;
     }
     case 0:
     {
     if (new_ == 2&&value==high);
-    if (new_ == 2&&value<high)value++;
+    if (new_ == 2&&value<high)value+=delta;
     if (new_ == 1&&value==low);
-    if (new_ == 1&&value>low) value--;
+    if (new_ == 1&&value>low) value-=delta;
     break;
     }
     case 1:
     {
     if (new_ == 0&&value==high);
-    if (new_ == 0&&value<high)value++;
+    if (new_ == 0&&value<high)value+=delta;
     if (new_ == 3&&value==low);
-    if (new_ == 3&&value>low) value--;
+    if (new_ == 3&&value>low) value-=delta;
     break;
     }		
     case 3:
     {
     if (new_ == 1&&value==high);
-    if (new_ == 1&&value<high)value++;
+    if (new_ == 1&&value<high)value+=delta;
     if (new_ == 2&&value==low);
-    if (new_ == 2&&value>low) value--;
+    if (new_ == 2&&value>low) value-=delta;
     break;
   }				
   }
@@ -75,5 +77,10 @@ void Senc::setHigh (uint16_t v)
 void Senc::setLow (uint16_t v)
 {
 	low = v << 1;
+}
+
+void Senc::setGrade (uint16_t val)
+{
+	delta = val;
 }
 
